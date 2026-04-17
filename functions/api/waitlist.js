@@ -51,6 +51,30 @@ export async function onRequestPost(context) {
       userAgent: request.headers.get('User-Agent') || '',
     }));
 
+    // Forward to Loops (upsert — creates or updates the contact)
+    if (env.LOOPS_API_KEY) {
+      try {
+        const res = await fetch('https://app.loops.so/api/v1/contacts/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${env.LOOPS_API_KEY}`,
+          },
+          body: JSON.stringify({
+            email: clean,
+            userGroup: 'Waitlist',
+            source: 'spoonfish.dev',
+            subscribed: true,
+          }),
+        });
+        if (!res.ok) {
+          console.error('Loops error', res.status, await res.text());
+        }
+      } catch (loopsErr) {
+        console.error('Loops fetch failed', loopsErr);
+      }
+    }
+
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
       headers,
