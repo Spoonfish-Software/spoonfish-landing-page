@@ -78,7 +78,6 @@ export async function onRequestPost(context) {
             email: clean,
             userGroup: 'Waitlist',
             source: 'spoonfish.dev',
-            subscribed: true,
           }),
         });
         if (!res.ok) {
