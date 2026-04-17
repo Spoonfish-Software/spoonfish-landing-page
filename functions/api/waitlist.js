@@ -18,7 +18,7 @@ export async function onRequestPost(context) {
   };
 
   try {
-    const { email } = await request.json();
+    const { email, token } = await request.json();
 
     // Validate
     if (!email || !email.includes('@') || email.length > 320) {
@@ -29,9 +29,23 @@ export async function onRequestPost(context) {
     }
 
     const clean = email.toLowerCase().trim();
-
-    // Rate limit by IP — 5 submissions per hour
     const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+
+    // Verify Turnstile token
+    if (env.TURNSTILE_SECRET) {
+      if (!token) {
+        return new Response(JSON.stringify({ error: 'Missing challenge token' }), { status: 400, headers });
+      }
+      const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ secret: env.TURNSTILE_SECRET, response: token, remoteip: ip }),
+      });
+      const verify = await verifyRes.json();
+      if (!verify.success) {
+        return new Response(JSON.stringify({ error: 'Challenge failed' }), { status: 403, headers });
+      }
+    }
     const rateKey = `rate:${ip}`;
     const rateCount = parseInt(await env.WAITLIST.get(rateKey) || '0');
     if (rateCount >= 5) {

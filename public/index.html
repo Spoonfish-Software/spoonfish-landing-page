@@ -391,8 +391,10 @@
     <input type="email" class="email-input" placeholder="you@company.com" aria-label="Email address">
     <button class="email-submit" onclick="handleSubmit()">Join</button>
   </div>
+  <div class="cf-turnstile" data-sitekey="0x4AAAAAAC_EAdp4WqpPW8zj" data-theme="dark" style="margin-top:16px;display:flex;justify-content:center"></div>
   <p class="form-note">No spam. We'll email you once when access opens.</p>
 </section>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 <footer>
   <div class="nav-logo">Spoon<span>fish</span></div>
@@ -419,6 +421,7 @@ document.querySelector('.email-input').addEventListener('keydown',e=>{
 function handleSubmit(){
   const input=document.querySelector('.email-input');
   const btn=document.querySelector('.email-submit');
+  const note=document.querySelector('.form-note');
   const email=input.value.trim();
   if(!email||!email.includes('@')){
     input.style.borderColor='var(--red)';
@@ -426,15 +429,33 @@ function handleSubmit(){
     setTimeout(()=>{input.style.animation='';input.style.borderColor='var(--border)'},600);
     return;
   }
+  const token=(window.turnstile&&turnstile.getResponse())||'';
+  if(!token){
+    note.textContent='Please complete the challenge above.';
+    note.style.color='var(--red)';
+    return;
+  }
   btn.textContent='✓ JOINED';
   btn.style.background='var(--green)';
   btn.style.borderColor='var(--green)';
   input.disabled=true;btn.disabled=true;
   btn.style.cursor='default';
-  // POST to Pages Function:
-  fetch('/api/waitlist',{method:'POST',body:JSON.stringify({email}),headers:{'Content-Type':'application/json'}})
-    .then(r=>{if(!r.ok)throw new Error('fail')})
-    .catch(()=>{btn.textContent='✓ JOINED';}) // Still show success — email was captured client-side
+  fetch('/api/waitlist',{method:'POST',body:JSON.stringify({email,token}),headers:{'Content-Type':'application/json'}})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{
+      if(!ok){
+        btn.textContent='ERROR';
+        btn.style.background='var(--red)';
+        btn.style.borderColor='var(--red)';
+        note.textContent=j.error||'Something went wrong.';
+        note.style.color='var(--red)';
+      }
+    })
+    .catch(()=>{
+      btn.textContent='ERROR';
+      btn.style.background='var(--red)';
+      btn.style.borderColor='var(--red)';
+    });
 }
 
 // Mockup clock tick
