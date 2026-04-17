@@ -3,476 +3,1641 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Spoonfish — Telemetry Engine</title>
-<meta name="description" content="Stop querying your infrastructure. Start playing it. Spoonfish is a telemetry engine that turns observability into an instrument you operate.">
+<title>Spoonfish — an instrument for observability</title>
+<meta name="description" content="Every signal your system emits — and every one that touches it — synchronized to a single scrubbable timeline. An instrument, not a dashboard.">
+<meta property="og:title" content="Spoonfish">
+<meta property="og:description" content="An instrument for observability. One time axis, every signal.">
+<meta name="theme-color" content="#0a0a0c">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Fragment+Mono&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+
 <style>
   :root {
-    --brand:'Chakra Petch',sans-serif;
-    --mono:'Fragment Mono',monospace;
-    --chrome:'DM Mono',monospace;
-    --bg:#0c0e14;
-    --surface:#14161c;
-    --surface2:#1a1e26;
-    --border:#444;
-    --text:#d0d0d0;
-    --text-dim:#888;
-    --accent:#38c8b0;
-    --blue:#58a8f0;
-    --green:#40d070;
-    --red:#e04050;
-    --elev-2:3px 3px 0 rgba(0,0,0,.5);
-    --elev-3:6px 6px 0 rgba(0,0,0,.5);
-    --elev-4:8px 8px 0 rgba(0,0,0,.5);
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  html{background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
-  body{font:16px/1.6 var(--brand);overflow-x:hidden}
-
-  /* NOISE GRAIN — materiality on dark surfaces */
-  .grain::after{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:128px;opacity:.05;pointer-events:none;mix-blend-mode:soft-light}
-
-  /* ═══ NAVIGATION ═══ */
-  nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,12,16,.9);backdrop-filter:blur(8px);border-bottom:2px solid #222;padding:0 40px;height:48px;display:flex;align-items:center}
-  .nav-logo{font:700 14px var(--brand);letter-spacing:3px;text-transform:uppercase;color:#e0e0e0}
-  .nav-logo span{color:var(--accent)}
-  nav .spacer{flex:1}
-  .nav-link{font:500 11px var(--chrome);color:#888;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;margin-left:32px;transition:color .2s}
-  .nav-link:hover{color:#fff}
-  .nav-cta{font:600 11px var(--brand);letter-spacing:1.5px;text-transform:uppercase;color:var(--bg);background:var(--accent);border:2px solid var(--accent);padding:6px 16px;text-decoration:none;margin-left:32px;box-shadow:var(--elev-2);transition:transform .1s,box-shadow .1s}
-  .nav-cta:hover{transform:translate(1px,1px);box-shadow:2px 2px 0 rgba(0,0,0,.5)}
-
-  /* ═══ HERO ═══ */
-  .hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:120px 80px 80px;position:relative;overflow:hidden}
-  .hero-eyebrow{font:600 11px var(--brand);letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:24px}
-  .hero h1{font:700 56px/1.1 var(--brand);letter-spacing:-1px;color:#f0f0f0;max-width:700px;margin-bottom:32px}
-  .hero h1 em{font-style:normal;color:var(--accent)}
-  .hero-sub{font:400 18px/1.7 var(--brand);color:#999;max-width:520px;margin-bottom:48px}
-  .hero-actions{display:flex;gap:16px;align-items:center}
-  .btn-primary{font:600 13px var(--brand);letter-spacing:2px;text-transform:uppercase;color:var(--bg);background:var(--accent);border:3px solid var(--accent);padding:12px 32px;text-decoration:none;box-shadow:var(--elev-3);transition:transform .1s,box-shadow .1s;cursor:pointer}
-  .btn-primary:hover{transform:translate(2px,2px);box-shadow:2px 2px 0 rgba(0,0,0,.5)}
-  .btn-secondary{font:600 13px var(--brand);letter-spacing:2px;text-transform:uppercase;color:var(--text);background:transparent;border:3px solid var(--border);padding:12px 32px;text-decoration:none;box-shadow:var(--elev-2);transition:transform .1s,box-shadow .1s}
-  .btn-secondary:hover{transform:translate(2px,2px);box-shadow:1px 1px 0 rgba(0,0,0,.5);border-color:#666}
-
-  /* Stats bar */
-  .stats-bar{display:flex;gap:48px;margin-top:64px;padding-top:32px;border-top:2px solid #222}
-  .stat{display:flex;flex-direction:column}
-  .stat-num{font:700 28px var(--brand);color:#f0f0f0}
-  .stat-label{font:500 10px var(--chrome);color:#666;letter-spacing:1.5px;text-transform:uppercase;margin-top:4px}
-
-  /* Hero visual — abstract timeline strip */
-  .hero-visual{position:absolute;right:-40px;top:50%;transform:translateY(-50%);width:480px;height:400px;opacity:.15;pointer-events:none}
-  .hv-row{height:40px;margin-bottom:4px;display:flex;gap:3px;align-items:center}
-  .hv-span{height:28px;border:2px solid rgba(255,255,255,.15)}
-  .hv-span.t{background:rgba(152,96,32,.4)}.hv-span.i{background:rgba(48,112,176,.4)}.hv-span.e{background:rgba(40,152,56,.4)}.hv-span.s{background:rgba(96,100,108,.3)}
-  .hv-span.err{background:rgba(200,48,32,.5);border-color:rgba(200,48,32,.4)}
-
-  /* ═══ PROBLEM SECTION ═══ */
-  .problem{padding:120px 80px;position:relative}
-  .problem .grain::after{z-index:0}
-  .section-label{font:600 10px var(--brand);letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
-  .problem h2{font:700 36px/1.2 var(--brand);color:#e8e8e8;max-width:600px;margin-bottom:40px}
-  .problem-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
-  .problem-card{background:var(--surface);border:2px solid #2a2c30;padding:32px;position:relative}
-  .problem-card::before{content:attr(data-num);font:700 48px var(--brand);color:rgba(56,200,176,.08);position:absolute;top:12px;right:16px}
-  .pc-stat{font:700 32px var(--brand);color:#f0f0f0;margin-bottom:8px}
-  .pc-source{font:500 9px var(--chrome);color:#555;letter-spacing:1px;margin-bottom:16px}
-  .pc-text{font:400 14px/1.6 var(--brand);color:#999}
-
-  /* ═══ SOLUTION / PRODUCT ═══ */
-  .solution{padding:120px 80px;background:var(--surface);border-top:3px solid #2a2c30;border-bottom:3px solid #2a2c30;position:relative}
-  .solution h2{font:700 36px/1.2 var(--brand);color:#e8e8e8;max-width:600px;margin-bottom:16px}
-  .solution .lead{font:400 17px/1.7 var(--brand);color:#999;max-width:560px;margin-bottom:48px}
-
-  /* Feature blocks */
-  .features{display:grid;grid-template-columns:repeat(2,1fr);gap:3px;margin-bottom:48px}
-  .feat{padding:32px;border:2px solid #2a2c30;background:var(--bg)}
-  .feat-icon{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:2px solid #555;margin-bottom:16px;font:700 14px var(--mono);color:#e0e0e0}
-  .feat h3{font:600 14px var(--brand);letter-spacing:1px;color:#e0e0e0;margin-bottom:8px}
-  .feat p{font:400 13px/1.6 var(--brand);color:#888}
-
-  /* Mockup embed area */
-  .mockup-frame{background:#1a1c20;border:3px solid #555;box-shadow:var(--elev-4);padding:0;overflow:hidden;aspect-ratio:16/8;display:flex;align-items:center;justify-content:center;position:relative}
-  
-  
-
-  /* ═══ HOW IT WORKS ═══ */
-  .how{padding:120px 80px}
-  .how h2{font:700 36px/1.2 var(--brand);color:#e8e8e8;margin-bottom:48px}
-  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
-  .step{padding:32px;border:2px solid #2a2c30;background:var(--surface);position:relative}
-  .step-num{font:700 11px var(--brand);color:#f0f0f0;letter-spacing:3px;margin-bottom:16px}
-  .step h3{font:600 16px var(--brand);color:#e0e0e0;margin-bottom:8px}
-  .step p{font:400 13px/1.6 var(--brand);color:#888}
-  .step-verb{font:700 13px var(--mono);color:var(--green);display:inline-block;border:2px solid rgba(72,208,96,.3);padding:2px 8px;margin-top:12px}
-
-  /* ═══ COMPARISON ═══ */
-  .compare{padding:120px 80px;background:var(--surface);border-top:3px solid #2a2c30;border-bottom:3px solid #2a2c30}
-  .compare h2{font:700 36px/1.2 var(--brand);color:#e8e8e8;margin-bottom:48px}
-  .compare-table{width:100%;border-collapse:collapse;border:2px solid var(--border)}
-  .compare-table th{font:600 10px var(--brand);letter-spacing:2px;text-transform:uppercase;color:#888;padding:12px 20px;text-align:left;border-bottom:2px solid var(--border);background:rgba(0,0,0,.3)}
-  .compare-table th:first-child{width:25%}
-  .compare-table th.us{color:var(--accent);font-weight:700}
-  .compare-table td{font:400 13px/1.5 var(--brand);color:#999;padding:12px 20px;border-bottom:1px solid #2a2c30;vertical-align:top}
-  .compare-table td.us{color:#ccc}
-  .compare-table tr:last-child td{border-bottom:none}
-  .tag{font:600 9px var(--brand);letter-spacing:1px;display:inline-block;padding:2px 8px;border:2px solid}
-  .tag.yes{color:var(--green);border-color:rgba(72,208,96,.3)}
-  .tag.no{color:#666;border-color:#333}
-  .tag.partial{color:var(--accent);border-color:rgba(208,160,64,.3)}
-
-  /* ═══ CTA / WAITLIST ═══ */
-  .cta{padding:120px 80px;text-align:center}
-  .cta h2{font:700 40px/1.2 var(--brand);color:#f0f0f0;margin-bottom:16px}
-  .cta .lead{font:400 17px/1.7 var(--brand);color:#888;max-width:500px;margin:0 auto 40px}
-  .email-form{display:flex;gap:0;max-width:480px;margin:0 auto}
-  .email-input{flex:1;font:14px var(--mono);color:#e0e0e0;background:var(--surface);border:3px solid var(--border);border-right:none;padding:12px 16px;outline:none}
-  .email-input::placeholder{color:#555}
-  .email-input:focus{border-color:var(--accent)}
-  .email-submit{font:600 12px var(--brand);letter-spacing:2px;text-transform:uppercase;color:var(--bg);background:var(--accent);border:3px solid var(--accent);padding:12px 24px;cursor:pointer;box-shadow:var(--elev-2);transition:transform .1s,box-shadow .1s}
-  .email-submit:hover{transform:translate(1px,1px);box-shadow:1px 1px 0 rgba(0,0,0,.5)}
-  .form-note{font:400 11px var(--chrome);color:#555;margin-top:12px}
-
-  /* ═══ FOOTER ═══ */
-  footer{padding:32px 80px;border-top:2px solid #222;display:flex;align-items:center}
-  footer .nav-logo{font-size:12px}
-  footer .spacer{flex:1}
-  footer .copy{font:400 10px var(--chrome);color:#555}
-
-  /* ═══ RESPONSIVE ═══ */
-  @media(max-width:900px){
-    .hero{padding:100px 32px 60px}
-    .hero h1{font-size:36px}
-    .problem,.solution,.how,.compare,.cta{padding:80px 32px}
-    .problem-grid,.features,.steps{grid-template-columns:1fr}
-    .stats-bar{flex-wrap:wrap;gap:24px}
-    .hero-visual{display:none}
-    nav{padding:0 20px}
-    .nav-link{display:none}
-    footer{padding:24px 32px}
+    --bg: #0a0a0c;
+    --paper: #0f0f12;
+    --ink: #ece8de;
+    --ink-dim: #7a766d;
+    --ink-faint: #3d3a33;
+    --rule: #1c1b18;
+    --rule-soft: #14130f;
+    --phosphor: #9bcf6f;
+    --amber: #e0a060;
+    --signal: #d8d3c7;
+    --error: #c97560;
+    --serif: 'IBM Plex Serif', Georgia, serif;
+    --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
   }
 
-  /* ═══ ANIMATIONS ═══ */
-  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-  .hero-eyebrow,.hero h1,.hero-sub,.hero-actions,.stats-bar{animation:fadeUp .6s ease-out both}
-  .hero h1{animation-delay:.1s}
-  .hero-sub{animation-delay:.2s}
-  .hero-actions{animation-delay:.3s}
-  .stats-bar{animation-delay:.4s}
-  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html {
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font: 400 14px/1.65 var(--mono);
+    letter-spacing: 0.005em;
+    overflow-x: hidden;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* ═══════════════════════════════════════ HEADER */
+
+  header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    padding: 24px 48px;
+    display: flex; align-items: baseline; justify-content: space-between;
+    background: linear-gradient(to bottom, var(--bg) 65%, transparent);
+    pointer-events: none;
+  }
+  header > * { pointer-events: auto; }
+
+  .mark {
+    font: 500 13px var(--mono);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 12px;
+  }
+
+  .mark-dot {
+    width: 7px; height: 7px;
+    background: var(--phosphor);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(155, 207, 111, 0.6);
+    animation: breathe 3.2s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.85); }
+  }
+
+  .meta {
+    font: 400 11px var(--mono);
+    color: var(--ink-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .meta em {
+    font-style: normal;
+    color: var(--ink);
+  }
+
+  /* ═══════════════════════════════════════ HERO */
+
+  .hero {
+    min-height: 100vh;
+    padding: 180px 48px 80px;
+    max-width: 1380px;
+    margin: 0 auto;
+    display: flex; flex-direction: column;
+  }
+
+  .eyebrow {
+    font: 400 10px var(--mono);
+    color: var(--ink-dim);
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    margin-bottom: 56px;
+    display: flex; align-items: center; gap: 14px;
+  }
+
+  .eyebrow::before {
+    content: ''; display: block;
+    width: 32px; height: 1px;
+    background: var(--ink-dim);
+  }
+
+  .title {
+    font: 400 clamp(40px, 7vw, 96px)/1.0 var(--serif);
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    max-width: 16ch;
+    margin-bottom: 48px;
+  }
+
+  .title em {
+    font-style: italic;
+    color: var(--ink);
+  }
+
+  .lede {
+    font: 400 17px/1.7 var(--mono);
+    color: var(--ink-dim);
+    max-width: 64ch;
+    margin-bottom: 72px;
+  }
+
+  .lede span {
+    color: var(--ink);
+  }
+
+  /* ═══════════════════════════════════════ SCOPE */
+
+  .scope-wrap {
+    position: relative;
+  }
+
+  .scope {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    height: clamp(320px, 48vh, 460px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .scope-chrome {
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 40px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--rule);
+    display: flex; align-items: center; gap: 28px;
+    font: 400 10px var(--mono);
+    color: var(--ink-dim);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    z-index: 3;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+  }
+
+  .scope-chrome .sep {
+    color: var(--ink-faint);
+  }
+
+  .scope-chrome .tc {
+    color: var(--phosphor);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 6px rgba(155, 207, 111, 0.4);
+  }
+
+  .scope-chrome .live {
+    color: var(--phosphor);
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+
+  .scope-chrome .live::before {
+    content: ''; width: 6px; height: 6px;
+    background: var(--phosphor); border-radius: 50%;
+    animation: breathe 1.2s ease-in-out infinite;
+  }
+
+  .scope canvas {
+    display: block;
+    width: 100%; height: 100%;
+  }
+
+  .caption {
+    font: 400 10px var(--mono);
+    color: var(--ink-dim);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 14px 4px 0;
+    display: flex; justify-content: space-between;
+  }
+
+  .caption span { color: var(--ink-faint); }
+
+  /* ═══════════════════════════════════════ BODY */
+
+  main {
+    max-width: 1380px;
+    margin: 0 auto;
+    padding: 0 48px;
+  }
+
+  section {
+    padding: 120px 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  section:first-of-type {
+    padding-top: 160px;
+  }
+
+  .section-label {
+    font: 400 10px var(--mono);
+    color: var(--ink-dim);
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    padding-top: 8px;
+  }
+
+  /* ═══════════════════════════════════════ MANIFESTO */
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 120px;
+    align-items: start;
+  }
+
+  .prose {
+    max-width: 60ch;
+  }
+
+  .prose p {
+    font: 400 19px/1.55 var(--serif);
+    color: var(--ink);
+    margin-bottom: 1.4em;
+    letter-spacing: -0.005em;
+  }
+
+  .prose p:last-child { margin-bottom: 0; }
+
+  .prose em {
+    font-style: italic;
+    color: var(--phosphor);
+  }
+
+  .prose strong {
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  /* ═══════════════════════════════════════ SPECS */
+
+  dl.specs {
+    margin: 0;
+  }
+
+  dl.specs > div {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 40px;
+    padding: 28px 20px;
+    margin: 0 -20px;
+    border-top: 1px solid var(--rule);
+  }
+
+  dl.specs > div:nth-child(even) {
+    background: rgba(236, 232, 222, 0.022);
+  }
+
+  dl.specs > div:first-child { border-top: none; }
+
+  dl.specs dt {
+    font: 500 12px var(--mono);
+    color: var(--ink);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding-top: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .spec-glyph {
+    width: 64px;
+    height: 20px;
+    stroke: var(--ink-dim);
+    fill: none;
+    stroke-width: 1;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.72;
+    overflow: visible;
+  }
+  .spec-glyph .filled { fill: var(--ink-dim); stroke: none; }
+  .spec-glyph .bold   { stroke-width: 1.6; }
+  .spec-glyph .dashed { stroke-dasharray: 2 2; }
+
+  dl.specs dd {
+    font: 400 15px/1.6 var(--mono);
+    color: var(--ink-dim);
+    max-width: 62ch;
+    letter-spacing: 0.005em;
+  }
+
+  dl.specs dd code {
+    font-family: inherit;
+    color: var(--ink);
+    background: var(--rule-soft);
+    padding: 1px 6px;
+    border: 1px solid var(--rule);
+  }
+
+  /* ═══════════════════════════════════════ WAITLIST */
+
+  #waitlist h2 {
+    font: 400 clamp(28px, 4vw, 44px)/1.1 var(--serif);
+    letter-spacing: -0.015em;
+    color: var(--ink);
+    max-width: 22ch;
+    margin-bottom: 24px;
+  }
+
+  #waitlist h2 em {
+    font-style: italic;
+  }
+
+  .sub-lede {
+    font: 400 15px/1.65 var(--mono);
+    color: var(--ink-dim);
+    max-width: 56ch;
+    margin-bottom: 48px;
+  }
+
+  .form {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    max-width: 540px;
+    border: 1px solid var(--ink-dim);
+    transition: border-color 0.2s;
+  }
+
+  .form:focus-within {
+    border-color: var(--ink);
+  }
+
+  .form input {
+    font: 400 14px var(--mono);
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--ink);
+    padding: 18px 20px;
+    letter-spacing: 0.02em;
+  }
+
+  .form input::placeholder {
+    color: var(--ink-faint);
+  }
+
+  .form input:disabled {
+    color: var(--ink-dim);
+  }
+
+  .form button {
+    font: 500 11px var(--mono);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: var(--ink);
+    border: none;
+    padding: 0 28px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    min-width: 180px;
+  }
+
+  .form button:hover {
+    background: var(--phosphor);
+  }
+
+  .form button:disabled {
+    cursor: default;
+    background: var(--ink-dim);
+    color: var(--bg);
+  }
+
+  .challenge {
+    margin-top: 24px;
+  }
+
+  .note {
+    font: 400 12px var(--mono);
+    color: var(--ink-faint);
+    letter-spacing: 0.02em;
+    margin-top: 20px;
+    max-width: 54ch;
+    min-height: 1.5em;
+  }
+
+  .note.error { color: var(--error); }
+  .note.ok { color: var(--phosphor); }
+
+  /* ═══════════════════════════════════════ FOOTER */
+
+  footer {
+    padding: 48px;
+    border-top: 1px solid var(--rule);
+    max-width: 1380px;
+    margin: 120px auto 0;
+    display: flex; justify-content: space-between; align-items: baseline;
+    font: 400 11px var(--mono);
+    color: var(--ink-faint);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  footer .colophon {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 13px;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--ink-dim);
+  }
+
+  .mark-fish {
+    display: inline-flex; align-items: center; gap: 12px;
+  }
+  .mark-fish svg {
+    width: 32px; height: 14px;
+    fill: var(--ink-dim);
+    stroke: none;
+    opacity: 0.95;
+    overflow: visible;
+  }
+  .mark-fish svg .eye { fill: var(--bg); }
+
+  /* ═══════════════════════════════════════ RESPONSIVE */
+
+  @media (max-width: 900px) {
+    header { padding: 20px 24px; }
+    .hero { padding: 140px 24px 60px; }
+    main { padding: 0 24px; }
+    section { padding: 80px 0; }
+    .two-col { grid-template-columns: 1fr; gap: 32px; }
+    dl.specs > div { grid-template-columns: 1fr; gap: 12px; padding: 24px 16px; margin: 0 -16px; }
+    .title { letter-spacing: -0.02em; }
+    footer { padding: 32px 24px; flex-direction: column; gap: 16px; align-items: flex-start; }
+    .meta { font-size: 10px; }
+    .form { grid-template-columns: 1fr; }
+    .form button { padding: 16px; }
+  }
+
+  @media (max-width: 600px) {
+    .caption { flex-direction: column; gap: 4px; }
+  }
+
+  ::selection {
+    background: var(--phosphor);
+    color: var(--bg);
+  }
 </style>
 </head>
 <body>
 
-<nav>
-  <div class="nav-logo">Spoon<span>fish</span></div>
-  <div class="spacer"></div>
-  <a href="#problem" class="nav-link">Why</a>
-  <a href="#product" class="nav-link">Product</a>
-  <a href="#how" class="nav-link">How</a>
-  <a href="#compare" class="nav-link">Compare</a>
-  <a href="#waitlist" class="nav-cta">Get Early Access</a>
-</nav>
+<header>
+  <a href="#" class="mark"><span class="mark-dot"></span>Spoonfish</a>
+  <span class="meta">Private beta · <em>Q3 2026</em></span>
+</header>
 
-<!-- ═══ HERO ═══ -->
-<section class="hero grain">
-  <div class="hero-eyebrow">Telemetry engine</div>
-  <h1>Stop querying your infrastructure. Start <em>playing</em> it.</h1>
-  <p class="hero-sub">Spoonfish is the first observability tool designed like an instrument — not a dashboard. Scrub through time. Mute the noise. Solo the signal. See your entire fleet as a living performance.</p>
-  <div class="hero-actions">
-    <a href="#waitlist" class="btn-primary">Join the Waitlist</a>
-    <a href="#product" class="btn-secondary">See How It Works</a>
-  </div>
-  <div class="stats-bar">
-    <div class="stat"><span class="stat-num">82%</span><span class="stat-label">of teams — MTTR over 1 hour</span></div>
-    <div class="stat"><span class="stat-num">41%</span><span class="stat-label">of engineers ignore alerts</span></div>
-    <div class="stat"><span class="stat-num">62%</span><span class="stat-label">ignore half their monitors</span></div>
-  </div>
-  <div class="hero-visual" aria-hidden="true">
-    <div class="hv-row"><div class="hv-span t" style="width:35%"></div><div class="hv-span t" style="width:30%"></div><div class="hv-span t" style="width:25%"></div></div>
-    <div class="hv-row"><div class="hv-span t" style="width:50%"></div><div class="hv-span err" style="width:20%"></div><div class="hv-span t" style="width:22%"></div></div>
-    <div class="hv-row"><div class="hv-span t" style="width:90%"></div></div>
-    <div class="hv-row"><div class="hv-span t" style="width:45%"></div><div class="hv-span t" style="width:45%"></div></div>
-    <div class="hv-row"><div class="hv-span err" style="width:15%"></div><div class="hv-span s" style="width:10%"></div><div class="hv-span err" style="width:8%"></div></div>
-    <div class="hv-row"><div class="hv-span i" style="width:8%"></div><div class="hv-span i" style="width:12%"></div><div class="hv-span i" style="width:6%"></div><div class="hv-span i" style="width:10%"></div><div class="hv-span i" style="width:7%"></div></div>
-    <div class="hv-row"><div class="hv-span i" style="width:10%"></div><div class="hv-span i" style="width:8%"></div><div class="hv-span i" style="width:14%"></div><div class="hv-span i" style="width:6%"></div></div>
-    <div class="hv-row"><div class="hv-span e" style="width:30%"></div><div class="hv-span e" style="width:25%"></div><div class="hv-span e" style="width:12%"></div></div>
-    <div class="hv-row"><div class="hv-span s" style="width:4%"></div><div class="hv-span s" style="width:4%"></div><div class="hv-span s" style="width:4%"></div></div>
-    <div class="hv-row"><div class="hv-span s" style="width:92%"></div></div>
-  </div>
-</section>
+<section class="hero">
+  <div class="eyebrow">001 — An instrument for observability</div>
 
-<!-- ═══ PROBLEM ═══ -->
-<section class="problem" id="problem">
-  <div class="section-label">The Problem</div>
-  <h2>More dashboards. More alerts. Slower resolution. How did we get here?</h2>
-  <div class="problem-grid">
-    <div class="problem-card" data-num="01">
-      <div class="pc-stat">82%</div>
-      <div class="pc-source">Observability Pulse 2024</div>
-      <p class="pc-text">of organizations take over an hour to resolve production incidents — up from 47% in 2021. Four years of tooling investment, and we're getting slower.</p>
+  <h1 class="title">The system, on <em>one</em> time axis.</h1>
+
+  <p class="lede">
+    <span>Every signal your system emits, and every one that touches it.</span>
+    Synchronized to a single scrubbable timeline.
+    Drag the playhead. Watch it happen. Mute the noise. Solo the suspect. Drill into the moment.
+    Let it play past now.
+  </p>
+
+  <div class="scope-wrap">
+    <div class="scope">
+      <div class="scope-chrome">
+        <span>Tracks <span class="sep">/</span> 6</span>
+        <span>Window <span class="sep">/</span> 00:02:00</span>
+        <span>Rate <span class="sep">/</span> 1.2M spans/s</span>
+        <span style="flex:1"></span>
+        <span class="tc" id="tc">00:01:37.204</span>
+        <span class="live">Live</span>
+      </div>
+      <canvas id="scope"></canvas>
     </div>
-    <div class="problem-card" data-num="02">
-      <div class="pc-stat">0%</div>
-      <div class="pc-source">OBSIUM field research</div>
-      <p class="pc-text">"We regularly see teams with beautiful Grafana setups that go completely unused when incidents occur. Engineers fall back to ad-hoc queries and tribal knowledge instead."</p>
-    </div>
-    <div class="problem-card" data-num="03">
-      <div class="pc-stat">$0</div>
-      <div class="pc-source">The real cost</div>
-      <p class="pc-text">You're paying for dashboards nobody reads, alerts nobody trusts, and correlation features nobody uses during an actual outage. The data is there. The insight isn't.</p>
+    <div class="caption">
+      <span>Figure 001 — synchronized tracks, scrubbable transport</span>
+      <span>Rendered live · 60fps</span>
     </div>
   </div>
 </section>
 
-<!-- ═══ PRODUCT ═══ -->
-<section class="solution" id="product">
-  <div class="section-label">The Instrument</div>
-  <h2>Not a dashboard. An instrument.</h2>
-  <p class="lead">Every observability tool is a database with a UI. Spoonfish is a timeline you operate — designed for the way engineers actually think during incidents: temporally, spatially, by elimination.</p>
+<main>
 
-  <div class="features">
-    <div class="feat">
-      <div class="feat-icon">⏮</div>
-      <h3>Scrub, Don't Query</h3>
-      <p>Drag the playhead through time. Watch your fleet's behavior unfold. No query language, no waiting for charts to render — continuous, GPU-accelerated playback.</p>
+  <section>
+    <div class="two-col">
+      <div class="section-label">On design</div>
+      <div class="prose">
+        <p>
+          Every observability tool ships as a database with charts bolted on. You write a query,
+          wait, read a chart, write another query. During an incident, at 3 a.m., under pressure —
+          this is the wrong interface.
+        </p>
+        <p>
+          Engineers don't reason about systems as queries. They reason about them <em>temporally</em> —
+          what happened, what came before, what was doing what at the moment it broke. And what
+          broke is rarely only in the telemetry. A commit landed an hour ago. A queue drained.
+          A rule in a security group flipped. Every cause leaves a mark somewhere. The tool should
+          gather all of them onto one axis.
+        </p>
+        <p>
+          Spoonfish does. A playhead. Tracks. Waveforms. Spans. A topology that behaves like a
+          map. An axis wide enough for the whole system, not just its telemetry.
+          <strong>No query bar. No tab switching. No correlation-by-screenshot.</strong>
+        </p>
+      </div>
     </div>
-    <div class="feat">
-      <div class="feat-icon">M</div>
-      <h3>Mute the Noise</h3>
-      <p>Hit M to mute a noisy node. Hit S to solo a suspect service. The same controls musicians use to isolate a problem track work for isolating a problem host.</p>
-    </div>
-    <div class="feat">
-      <div class="feat-icon">◉</div>
-      <h3>Fused Telemetry</h3>
-      <p>Spans, metrics, and topology on one time axis. No tab switching. No manual correlation. Waveforms show utilization, spans show behavior, the map shows structure — all moving together under one cursor.</p>
-    </div>
-    <div class="feat">
-      <div class="feat-icon">▦</div>
-      <h3>Geographic Topology</h3>
-      <p>Your fleet has fixed positions in infrastructure-space — racks, zones, regions, clouds. The service map reads like terrain, not a physics simulation. Nodes stay where they belong.</p>
-    </div>
-  </div>
+  </section>
 
-  <div class="mockup-frame grain">
-    <div style="width:100%;height:100%;display:flex;flex-direction:column;font-family:var(--brand)">
-  <!-- Title bar -->
-  <div style="height:22px;background:#141418;border-bottom:2px solid #444;display:flex;align-items:center;padding:0 8px;gap:6px;flex-shrink:0">
-    <div style="width:7px;height:7px;border:2px solid #555"></div><div style="width:7px;height:7px;border:2px solid #555"></div><div style="width:7px;height:7px;border:2px solid #555"></div>
-    <span style="font:700 10px var(--brand);letter-spacing:2px;color:#999;text-transform:uppercase;margin-left:4px">Spoonfish</span>
-    <span style="font:500 9px var(--chrome);color:#555;margin-left:auto">us-west-2 · prod</span>
-  </div>
-  <!-- Transport -->
-  <div style="height:22px;background:#222428;border-bottom:2px solid #444;display:flex;align-items:center;padding:0 8px;gap:4px;flex-shrink:0">
-    <div style="font:600 9px var(--brand);background:#383c44;border:1px solid #555;color:#ccc;padding:1px 6px">⏮</div>
-    <div style="font:600 9px var(--brand);background:#383c44;border:1px solid #555;color:#ccc;padding:1px 6px">◀</div>
-    <div style="font:600 9px var(--brand);background:#383c44;border:1px solid #555;color:var(--green);padding:1px 6px">▶</div>
-    <div style="font:600 9px var(--brand);background:#383c44;border:1px solid #555;color:#ccc;padding:1px 6px">▶▶</div>
-    <div style="font:11px var(--mono);color:#00ff88;background:#0a0c10;border:1px solid #444;padding:1px 6px;letter-spacing:1px;margin-left:4px" id="mockClock">14:21:36</div>
-    <div style="flex:1"></div>
-    <div style="font:600 8px var(--brand);background:var(--green);color:#fff;padding:1px 6px;letter-spacing:1px">● LIVE</div>
-  </div>
-  <!-- Timeline grid -->
-  <div style="flex:1;display:grid;grid-template-columns:100px 1fr;min-height:0;overflow:hidden">
-    <!-- Host column -->
-    <div style="background:#252830;border-right:2px solid #444;overflow:hidden;font:9px var(--mono);color:#bbb">
-      <div style="border-bottom:1px solid #333;padding:3px 6px;border-left:3px solid #d0a040"><b style="font:10px var(--mono);color:#e0e0e0">gpu-node-01</b><br><span style="color:#888">A100 · 72%</span></div>
-      <div style="border-bottom:1px solid #333;padding:3px 6px;border-left:3px solid #d0a040"><b style="font:10px var(--mono);color:#e0e0e0">gpu-node-02</b><br><span style="color:#888">A100 · 94%</span></div>
-      <div style="border-bottom:1px solid #333;padding:3px 6px;border-left:3px solid #d0a040;background:#3a2020"><b style="font:10px var(--mono);color:#ff6050">gpu-node-14</b><br><span style="color:#888">A100 · 0%</span></div>
-      <div style="border-bottom:1px solid #333;padding:3px 6px;border-left:3px solid #58a8f0"><b style="font:10px var(--mono);color:#e0e0e0">inference-01</b><br><span style="color:#888">A10G · 61%</span></div>
-      <div style="border-bottom:1px solid #333;padding:3px 6px;border-left:3px solid #48d060"><b style="font:10px var(--mono);color:#e0e0e0">etl-worker-03</b><br><span style="color:#888">CPU · 35%</span></div>
-      <div style="padding:3px 6px;border-left:3px solid #989ca4"><b style="font:10px var(--mono);color:#e0e0e0">scheduler-01</b><br><span style="color:#888">CPU · 12%</span></div>
+  <section>
+    <div class="two-col">
+      <div class="section-label">On cartography</div>
+      <div class="prose">
+        <p>
+          A service graph drawn by a force-directed algorithm rearranges itself every time you
+          open it. That's not a map — it's <em>weather</em>. Spoonfish renders topology the way
+          cartographers do: stable geography, semantic zoom, a shape you can learn.
+        </p>
+        <p>
+          Zoom out for the shape of the estate. Zoom in until you can read the service names
+          and watch a single request thread its way across them — one continuous route, picking
+          up color as health or latency change along the hops. Pins where it mattered. The
+          map doesn't reshuffle. It resolves.
+        </p>
+      </div>
     </div>
-    <!-- Canvas -->
-    <div style="background:#1c1e22;position:relative;overflow:hidden">
-      <!-- Gridlines -->
-      <div style="position:absolute;left:25%;top:0;bottom:0;width:1px;background:rgba(255,255,255,.08)"></div>
-      <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,255,255,.08)"></div>
-      <div style="position:absolute;left:75%;top:0;bottom:0;width:1px;background:rgba(255,255,255,.08)"></div>
-      <!-- Row 1: training spans -->
-      <div style="position:absolute;top:4px;left:2%;width:32%;height:18px;background:#986020;border:2px solid #666"><span style="font:700 9px var(--mono);color:#eee;padding:0 4px">train.forward</span></div>
-      <div style="position:absolute;top:4px;left:38%;width:28%;height:18px;background:#986020;border:2px solid #666"><span style="font:700 9px var(--mono);color:#eee;padding:0 4px">train.forward</span></div>
-      <div style="position:absolute;top:4px;left:70%;width:28%;height:18px;background:#986020;border:2px solid #666"><span style="font:700 9px var(--mono);color:#eee;padding:0 4px">train.forward</span></div>
-      <!-- Row 2 -->
-      <div style="position:absolute;top:37px;left:1%;width:48%;height:18px;background:#986020;border:2px solid #666"><span style="font:700 9px var(--mono);color:#eee;padding:0 4px">train.backward</span></div>
-      <div style="position:absolute;top:37px;left:52%;width:18%;height:18px;background:#a03020;border:2px solid #cc4030"><span style="font:700 9px var(--mono);color:#fff;padding:0 4px">allreduce (timeout)</span></div>
-      <!-- Row 3: error -->
-      <div style="position:absolute;top:70px;left:1%;width:30%;height:18px;background:#986020;border:2px solid #666"><span style="font:700 9px var(--mono);color:#eee;padding:0 4px">train.forward</span></div>
-      <div style="position:absolute;top:70px;left:34%;width:14%;height:18px;background:#a03020;border:2px solid #cc4030"><span style="font:700 9px var(--mono);color:#fff;padding:0 4px">OOM</span></div>
-      <div style="position:absolute;top:70px;left:56%;width:8%;height:18px;background:#a03020;border:2px solid #cc4030"></div>
-      <!-- Error pin -->
-      <div style="position:absolute;top:60px;left:34%;width:2px;height:38px;background:#e04050"></div>
-      <!-- Row 4: inference -->
-      <div style="position:absolute;top:103px;left:4%;width:5%;height:14px;background:#3070b0;border:1px solid #666"></div>
-      <div style="position:absolute;top:103px;left:12%;width:8%;height:14px;background:#3070b0;border:1px solid #666"></div>
-      <div style="position:absolute;top:103px;left:24%;width:4%;height:14px;background:#3070b0;border:1px solid #666"></div>
-      <div style="position:absolute;top:103px;left:32%;width:6%;height:14px;background:#3070b0;border:1px solid #666"></div>
-      <div style="position:absolute;top:103px;left:42%;width:5%;height:14px;background:#3070b0;border:1px solid #666"></div>
-      <div style="position:absolute;top:103px;left:52%;width:7%;height:14px;background:#3070b0;border:1px solid #666"></div>
-      <div style="position:absolute;top:103px;left:64%;width:4%;height:14px;background:#3070b0;border:1px solid #666"></div>
-      <div style="position:absolute;top:103px;left:72%;width:8%;height:14px;background:#3070b0;border:1px solid #666"></div>
-      <div style="position:absolute;top:103px;left:84%;width:5%;height:14px;background:#3070b0;border:1px solid #666"></div>
-      <!-- Row 5: etl -->
-      <div style="position:absolute;top:125px;left:5%;width:28%;height:18px;background:#289838;border:2px solid #666"><span style="font:700 9px var(--mono);color:#eee;padding:0 4px">extract.s3_scan</span></div>
-      <div style="position:absolute;top:125px;left:58%;width:24%;height:18px;background:#289838;border:2px solid #666"><span style="font:700 9px var(--mono);color:#eee;padding:0 4px">extract.s3_scan</span></div>
-      <!-- Row 6: scheduler -->
-      <div style="position:absolute;top:152px;left:1%;width:96%;height:14px;background:rgba(96,100,108,.25);border:1px dashed #555;opacity:.6"></div>
-      <!-- Deploy marker -->
-      <div style="position:absolute;top:0;bottom:0;left:33%;width:3px;background:var(--blue);opacity:.7"></div>
-      <div style="position:absolute;top:3px;left:calc(33% + 5px);font:600 8px var(--brand);color:#fff;background:var(--blue);padding:1px 5px;border:1px solid #4098d0;letter-spacing:.5px">v2.14.1</div>
-      <!-- Cursor -->
-      <div style="position:absolute;top:0;bottom:0;left:72%;width:2px;background:#e0e0e0;z-index:5"></div>
-      <div style="position:absolute;top:3px;left:72%;transform:translateX(-50%);font:700 9px var(--mono);color:#fff;background:#0a0a0a;padding:2px 6px;border:2px solid #888;z-index:6;letter-spacing:1px">14:21:36</div>
-    </div>
-  </div>
-  <!-- Status bar -->
-  <div style="height:18px;background:#141418;border-top:2px solid #444;display:flex;align-items:center;padding:0 8px;gap:8px;font:9px var(--chrome);color:#777;flex-shrink:0">
-    <span style="color:var(--green)">● streaming</span>
-    <span>6 hosts</span>
-    <span style="margin-left:auto;color:#e04050">3 errors</span>
-  </div>
-</div>
-  </div>
-</section>
 
-<!-- ═══ HOW IT WORKS ═══ -->
-<section class="how" id="how">
-  <div class="section-label">How It Works</div>
-  <h2>Three verbs. Not thirty panels.</h2>
-  <div class="steps">
-    <div class="step">
-      <div class="step-num">01</div>
-      <h3>See everything at once</h3>
-      <p>Your entire fleet rendered as instrument tracks — hosts, services, utilization waveforms, span timelines, and a living topology map. One screen. No navigation.</p>
-      <span class="step-verb">OBSERVE</span>
+    <div class="scope-wrap" style="margin-top: 72px;">
+      <div class="scope">
+        <div class="scope-chrome">
+          <span>Topology <span class="sep">/</span> global</span>
+          <span>Nodes <span class="sep">/</span> 2,847</span>
+          <span>Edges <span class="sep">/</span> 9,104</span>
+          <span>Zoom <span class="sep">/</span> <span id="zoom">1.00</span>×</span>
+          <span style="flex:1"></span>
+          <span class="tc" id="coord">40.71° N · 74.01° W</span>
+          <span class="live">Live</span>
+        </div>
+        <canvas id="topo"></canvas>
+      </div>
+      <div class="caption">
+        <span>Figure 002 — service cartography, semantic zoom, stable geography</span>
+        <span>Rendered live · 60fps</span>
+      </div>
     </div>
-    <div class="step">
-      <div class="step-num">02</div>
-      <h3>Scrub to the moment</h3>
-      <p>Drag the playhead to any point in time. Every track, every waveform, every node on the topology map updates simultaneously. Time is a physical dimension you can touch.</p>
-      <span class="step-verb">NAVIGATE</span>
-    </div>
-    <div class="step">
-      <div class="step-num">03</div>
-      <h3>Isolate by elimination</h3>
-      <p>Mute the healthy nodes. Solo the suspect service. Expand a track to see child spans. Zoom into a time window. Each action eliminates noise. What remains is the root cause.</p>
-      <span class="step-verb">RESOLVE</span>
-    </div>
-  </div>
-</section>
+  </section>
 
-<!-- ═══ COMPARISON ═══ -->
-<section class="compare" id="compare">
-  <div class="section-label">Why Switch</div>
-  <h2>Different by design, not by degree.</h2>
-  <table class="compare-table">
-    <thead>
-      <tr><th></th><th>Traditional APM</th><th class="us">Spoonfish</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>Interaction model</td><td>Query → wait → chart</td><td class="us">Continuous playback with scrub</td></tr>
-      <tr><td>Telemetry correlation</td><td>Switch between tabs</td><td class="us">Fused on one time axis</td></tr>
-      <tr><td>Noise management</td><td>Filter parameters</td><td class="us">Mute / Solo / Expand</td></tr>
-      <tr><td>Topology</td><td>Force-directed graph</td><td class="us">Geographic — fixed positions</td></tr>
-      <tr><td>Infrastructure awareness</td><td><span class="tag no">Generic metrics</span></td><td class="us"><span class="tag yes">Instance types, costs, topology</span></td></tr>
-      <tr><td>Rendering</td><td>DOM / SVG / Canvas 2D</td><td class="us">WebGPU — 60fps at any scale</td></tr>
-      <tr><td>Pricing</td><td>Per span / per host / per GB ingested</td><td class="us"><span class="tag yes">Flat storage</span> — never per span</td></tr>
-    </tbody>
-  </table>
-</section>
+  <section>
+    <div class="two-col">
+      <div class="section-label">Details</div>
+      <dl class="specs">
+        <div>
+          <dt>
+            <svg class="spec-glyph" viewBox="0 0 64 20" aria-hidden="true">
+              <line x1="2" y1="10" x2="62" y2="10"/>
+              <line x1="28" y1="3" x2="28" y2="17"/>
+              <circle class="filled" cx="28" cy="10" r="2"/>
+            </svg>
+            Transport
+          </dt>
+          <dd>
+            Play, pause, scrub, zoom. Sub-millisecond seek across hours or weeks. The playhead
+            is the only cursor that matters; every track below it moves in lockstep.
+          </dd>
+        </div>
+        <div>
+          <dt>
+            <svg class="spec-glyph" viewBox="0 0 64 20" aria-hidden="true">
+              <polyline points="2,4 8,2 14,5 20,3 26,5 32,2 38,4 44,3 50,5 56,3 62,4"/>
+              <line class="bold" x1="6" y1="10" x2="20" y2="10"/>
+              <line class="bold" x1="26" y1="10" x2="38" y2="10"/>
+              <line class="bold" x1="46" y1="10" x2="58" y2="10"/>
+              <line x1="2" y1="17" x2="62" y2="17"/>
+              <line x1="12" y1="14" x2="12" y2="17"/>
+              <line x1="28" y1="14" x2="28" y2="17"/>
+              <line x1="44" y1="14" x2="44" y2="17"/>
+              <line x1="54" y1="14" x2="54" y2="17"/>
+            </svg>
+            Tracks
+          </dt>
+          <dd>
+            Every moving part as a dedicated track — utilization waveforms, span timelines,
+            error pins, deploy markers, commit landings, topology deltas, kernel events.
+            Whatever your system can emit goes on the axis, next to everything else that moved
+            with it.
+          </dd>
+        </div>
+        <div>
+          <dt>
+            <svg class="spec-glyph" viewBox="0 0 64 20" aria-hidden="true">
+              <path d="M 6 17 Q 10 8, 22 7 T 44 8 Q 56 11, 60 17"/>
+              <path d="M 14 17 Q 20 13, 28 12 T 48 14"/>
+              <circle class="filled" cx="32" cy="10" r="1.6"/>
+            </svg>
+            Cartography
+          </dt>
+          <dd>
+            A topology built on the logic of a geographical map, not a force-directed graph.
+            Services sit where you left them. Zoom out for the shape of the whole system;
+            zoom in until individual routes, pins, and boundaries resolve. A map you can
+            learn, not a diagram that reshuffles.
+          </dd>
+        </div>
+        <div>
+          <dt>
+            <svg class="spec-glyph" viewBox="0 0 64 20" aria-hidden="true">
+              <path d="M 2 4 Q 8 2.5 14 4 Q 20 5.5 26 4 Q 32 2.5 38 4 Q 44 5.5 50 4 Q 56 2.5 62 4" stroke-opacity="0.32"/>
+              <polyline class="bold" points="2,10 8,7 14,12 20,8 26,11 32,7 38,12 44,8 50,11 56,7 62,10"/>
+              <path d="M 2 16 Q 14 16 27 16"/>
+              <path d="M 27 16 Q 32 14 37 14 L 60 14"/>
+              <path d="M 27 16 Q 32 18 37 18 L 60 18"/>
+            </svg>
+            Mute, Solo, Drill
+          </dt>
+          <dd>
+            Hide the healthy. Isolate the suspect. Expand a track into its children. Debug by
+            elimination, not by query — the same way you'd debug with headphones on.
+          </dd>
+        </div>
+        <div>
+          <dt>
+            <svg class="spec-glyph" viewBox="0 0 64 20" aria-hidden="true">
+              <line x1="2" y1="6" x2="62" y2="6" stroke-opacity="0.35"/>
+              <path d="M 2 14 Q 8 13.2 14 14 Q 20 14.6 26 14"/>
+              <line x1="30" y1="3" x2="30" y2="17"/>
+              <path class="dashed" d="M 30 14 Q 36 10 42 6 Q 48 2.5 54 6 Q 58 9 62 11.5"/>
+              <circle cx="42" cy="6" r="1.5" fill="none" stroke-opacity="0.6"/>
+            </svg>
+            Precognition
+          </dt>
+          <dd>
+            The recording doesn't stop at <code>now</code>. The same model that replays the last
+            hour extrapolates the next few seconds, so you see the spike forming before the
+            alert fires — a flight recorder that also looks ahead.
+          </dd>
+        </div>
+        <div>
+          <dt>
+            <svg class="spec-glyph" viewBox="0 0 64 20" aria-hidden="true">
+              <ellipse cx="32" cy="5" rx="22" ry="2"/>
+              <path d="M 10 5 L 10 15 Q 32 18 54 15 L 54 5"/>
+              <line x1="18" y1="9"  x2="18" y2="14"/>
+              <line x1="23" y1="7"  x2="23" y2="14"/>
+              <line x1="28" y1="11" x2="28" y2="14"/>
+              <line x1="33" y1="8"  x2="33" y2="14"/>
+              <line x1="38" y1="10" x2="38" y2="14"/>
+              <line x1="43" y1="7"  x2="43" y2="14"/>
+              <line x1="48" y1="9"  x2="48" y2="14"/>
+            </svg>
+            Full fidelity, your bucket
+          </dt>
+          <dd>
+            No sampling. No cardinality tax. High-cardinality dimensions are a feature, not a
+            billing line. Columnar <code>Parquet</code> over your <code>S3</code> or <code>R2</code>
+            bucket, queried in-process with <code>DataFusion</code>. Open format, always
+            exportable, never held hostage.
+          </dd>
+        </div>
+      </dl>
+    </div>
+  </section>
 
-<!-- ═══ WAITLIST CTA ═══ -->
-<section class="cta" id="waitlist">
-  <div class="section-label">Early Access</div>
-  <h2>Built for teams that operate infrastructure.</h2>
-  <p class="lead">Spoonfish is in private development. GPU clusters, microservice fleets, data pipelines — if you operate it, you can play it. Join the waitlist.</p>
-  <div class="email-form">
-    <input type="email" class="email-input" placeholder="you@company.com" aria-label="Email address">
-    <button class="email-submit" onclick="handleSubmit()">Join</button>
-  </div>
-  <div class="cf-turnstile" data-sitekey="0x4AAAAAAC_EAdp4WqpPW8zj" data-theme="dark" style="margin-top:16px;display:flex;justify-content:center"></div>
-  <p class="form-note">No spam. We'll email you once when access opens.</p>
-</section>
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <section id="waitlist">
+    <div class="two-col">
+      <div class="section-label">Access</div>
+      <div>
+        <h2>First cohort, <em>Q3 2026</em>.</h2>
+        <p class="sub-lede">
+          Private beta opens with a small group of design partners — teams who've given up on
+          correlating by screenshot and want the whole system on one axis. All stacks welcome;
+          mixed stacks preferred.
+        </p>
+
+        <form class="form" onsubmit="return submitEmail(event)">
+          <input type="email" id="email" placeholder="you@company.com" aria-label="Email address" autocomplete="email" required>
+          <button type="submit" id="submit">Request access</button>
+        </form>
+
+        <div class="challenge">
+          <div class="cf-turnstile" data-sitekey="0x4AAAAAAC_EAdp4WqpPW8zj" data-theme="dark"></div>
+        </div>
+
+        <p class="note" id="note">One email when access opens. Nothing else.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
 
 <footer>
-  <div class="nav-logo">Spoon<span>fish</span></div>
-  <div class="spacer"></div>
-  <span class="copy">© 2026 Spoonfish. Telemetry you operate.</span>
+  <span class="mark-fish">
+    <svg viewBox="0 0 36 16" aria-label="Spoonfish">
+      <path d="M 2 4 L 7 6 Q 10 2 18 1.5 Q 28 2 34 5 Q 35 8 34 11 Q 28 14 18 14.5 Q 10 14 7 10 L 2 12 Q 6 8 2 4 Z"/>
+      <circle class="eye" cx="28" cy="7" r="1.3"/>
+    </svg>
+    <span>MMXXVI</span>
+  </span>
+  <span class="colophon">An instrument, not a dashboard.</span>
 </footer>
 
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
 <script>
-// Smooth scroll for all anchor links
-document.querySelectorAll('a[href^="#"]').forEach(a=>{
-  a.addEventListener('click',e=>{
-    e.preventDefault();
-    const t=document.querySelector(a.getAttribute('href'));
-    if(t)t.scrollIntoView({behavior:'smooth',block:'start'});
-  });
+// ═══════════════════════════════════════ LIVE SCOPE
+
+const canvas = document.getElementById('scope');
+const ctx = canvas.getContext('2d');
+let dpr = window.devicePixelRatio || 1;
+
+function fit() {
+  const r = canvas.getBoundingClientRect();
+  canvas.width = Math.floor(r.width * dpr);
+  canvas.height = Math.floor(r.height * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+fit();
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { fit(); fitTopo(); }, 100);
 });
 
-// Email form — enter key submits
-document.querySelector('.email-input').addEventListener('keydown',e=>{
-  if(e.key==='Enter')handleSubmit();
-});
-
-// Waitlist submit
-function handleSubmit(){
-  const input=document.querySelector('.email-input');
-  const btn=document.querySelector('.email-submit');
-  const note=document.querySelector('.form-note');
-  const email=input.value.trim();
-  if(!email||!email.includes('@')){
-    input.style.borderColor='var(--red)';
-    input.style.animation='shake .3s';
-    setTimeout(()=>{input.style.animation='';input.style.borderColor='var(--border)'},600);
-    return;
-  }
-  const token=(window.turnstile&&turnstile.getResponse())||'';
-  if(!token){
-    note.textContent='Please complete the challenge above.';
-    note.style.color='var(--red)';
-    return;
-  }
-  btn.textContent='✓ JOINED';
-  btn.style.background='var(--green)';
-  btn.style.borderColor='var(--green)';
-  input.disabled=true;btn.disabled=true;
-  btn.style.cursor='default';
-  fetch('/api/waitlist',{method:'POST',body:JSON.stringify({email,token}),headers:{'Content-Type':'application/json'}})
-    .then(r=>r.json().then(j=>({ok:r.ok,j})))
-    .then(({ok,j})=>{
-      if(!ok){
-        btn.textContent='ERROR';
-        btn.style.background='var(--red)';
-        btn.style.borderColor='var(--red)';
-        note.textContent=j.error||'Something went wrong.';
-        note.style.color='var(--red)';
-      }
-    })
-    .catch(()=>{
-      btn.textContent='ERROR';
-      btn.style.background='var(--red)';
-      btn.style.borderColor='var(--red)';
-    });
+// Deterministic value noise — smooth, organic, reproducible.
+function hash(x, seed) {
+  const v = Math.sin(x * 12.9898 + seed * 78.233) * 43758.5453;
+  return v - Math.floor(v);
+}
+function smooth(x, seed) {
+  const xi = Math.floor(x);
+  const xf = x - xi;
+  const a = hash(xi, seed);
+  const b = hash(xi + 1, seed);
+  const t = xf * xf * (3 - 2 * xf);
+  return a * (1 - t) + b * t;
+}
+function fbm(x, seed) {
+  // 3-octave fractal brownian motion for more natural curves
+  return smooth(x, seed) * 0.6
+       + smooth(x * 2.1, seed + 0.3) * 0.3
+       + smooth(x * 4.3, seed + 0.7) * 0.1;
 }
 
-// Mockup clock tick
-const mc=document.getElementById('mockClock');
-if(mc){let s=36;setInterval(()=>{s++;const m=Math.floor(s/60);const ss=s%60;mc.textContent='14:'+String(21+m).padStart(2,'0')+':'+String(ss).padStart(2,'0')},1000)}
+const tracks = [
+  { label: 'api-gateway-01',    type: 'wave',  seed: 1.10, base: 0.55, amp: 0.30 },
+  { label: 'gpu-train-a100-03', type: 'wave',  seed: 2.30, base: 0.78, amp: 0.18 },
+  { label: 'inference-fleet',   type: 'spans', seed: 3.70, density: 0.7 },
+  { label: 'etl-stream-02',     type: 'wave',  seed: 4.15, base: 0.40, amp: 0.42 },
+  { label: 'checkout-service',  type: 'spans', seed: 5.20, density: 0.45, errors: true },
+  { label: 'scheduler',         type: 'wave',  seed: 6.40, base: 0.22, amp: 0.12 },
+];
 
-// Nav highlight on scroll
-const sections=document.querySelectorAll('section[id]');
-const navLinks=document.querySelectorAll('.nav-link');
-window.addEventListener('scroll',()=>{
-  const y=window.scrollY+100;
-  sections.forEach(s=>{
-    const top=s.offsetTop,h=s.offsetHeight,id=s.id;
-    const link=document.querySelector(`.nav-link[href="#${id}"]`);
-    if(link){if(y>=top&&y<top+h)link.style.color='#fff';else link.style.color=''}
+let offsetX = 0;
+const startTime = performance.now();
+
+function drawChromePad(labelW, chromeH, bodyH) {
+  // left label column background (opaque)
+  ctx.fillStyle = '#0f0f12';
+  ctx.fillRect(0, chromeH, labelW, bodyH);
+  // divider
+  ctx.strokeStyle = '#1c1b18';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(labelW + 0.5, chromeH);
+  ctx.lineTo(labelW + 0.5, chromeH + bodyH);
+  ctx.stroke();
+}
+
+function drawGrid(w, h, chromeH, trackH, labelW) {
+  ctx.strokeStyle = '#1c1b18';
+  ctx.lineWidth = 1;
+  for (let i = 1; i < tracks.length; i++) {
+    const y = chromeH + i * trackH + 0.5;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+
+  // vertical time grid — scrolls with offset
+  ctx.strokeStyle = 'rgba(28, 27, 24, 0.7)';
+  const spacing = 140;
+  const shift = offsetX % spacing;
+  for (let x = labelW + spacing - shift; x < w; x += spacing) {
+    ctx.beginPath();
+    ctx.moveTo(x + 0.5, chromeH);
+    ctx.lineTo(x + 0.5, h);
+    ctx.stroke();
+  }
+}
+
+function drawLabels(chromeH, trackH, labelW) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, chromeH, labelW, trackH * tracks.length);
+  ctx.clip();
+
+  ctx.font = '500 10px "IBM Plex Mono", monospace';
+  for (let i = 0; i < tracks.length; i++) {
+    const ty = chromeH + i * trackH;
+    const cy = ty + trackH / 2;
+
+    // name
+    ctx.fillStyle = '#ece8de';
+    ctx.fillText(tracks[i].label, 20, cy - 2);
+
+    // subtitle
+    ctx.fillStyle = '#3d3a33';
+    ctx.fillText(tracks[i].type === 'wave' ? 'util %' : 'spans', 20, cy + 12);
+  }
+  ctx.restore();
+}
+
+function drawWave(track, ty, trackH, labelW, w, time) {
+  const step = 2;
+  const range = trackH * 0.68;
+  const mid = ty + trackH / 2;
+  const seed = track.seed;
+
+  const points = [];
+  for (let x = labelW; x <= w; x += step) {
+    const t = (x + offsetX) / 55 + time * 0.15;
+    const n = fbm(t, seed) * track.amp + (track.base - track.amp / 2);
+    const yp = mid - (n - 0.5) * range;
+    points.push([x, yp]);
+  }
+
+  // fill
+  ctx.beginPath();
+  ctx.moveTo(points[0][0], ty + trackH);
+  for (const [px, py] of points) ctx.lineTo(px, py);
+  ctx.lineTo(points[points.length - 1][0], ty + trackH);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(216, 211, 199, 0.04)';
+  ctx.fill();
+
+  // stroke
+  ctx.beginPath();
+  ctx.moveTo(points[0][0], points[0][1]);
+  for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
+  ctx.strokeStyle = '#d8d3c7';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
+function drawSpans(track, ty, trackH, labelW, w) {
+  const spanH = Math.min(trackH * 0.48, 22);
+  const spanY = ty + (trackH - spanH) / 2;
+  const cellW = 70;
+  const pxOffset = offsetX % cellW;
+  const count = Math.ceil((w - labelW) / cellW) + 4;
+  const baseIdx = Math.floor(offsetX / cellW);
+
+  for (let i = -2; i < count; i++) {
+    const idx = baseIdx + i;
+    const skip = hash(idx, track.seed + 5);
+    if (skip > track.density) continue;
+
+    const x0 = labelW + i * cellW - pxOffset;
+    const widthFrac = 0.35 + hash(idx, track.seed) * 0.5;
+    const spanW = widthFrac * cellW;
+    const isError = track.errors && hash(idx, track.seed + 11) > 0.86;
+
+    if (isError) {
+      ctx.fillStyle = 'rgba(201, 117, 96, 0.22)';
+      ctx.strokeStyle = '#c97560';
+    } else {
+      ctx.fillStyle = 'rgba(216, 211, 199, 0.10)';
+      ctx.strokeStyle = 'rgba(216, 211, 199, 0.55)';
+    }
+    ctx.lineWidth = 1;
+
+    const sx = x0 + 2, sy = spanY + 0.5, sw = spanW - 2, sh = spanH - 1;
+    ctx.fillRect(sx, sy, sw, sh);
+    ctx.strokeRect(sx + 0.5, sy + 0.5, sw - 1, sh - 1);
+  }
+}
+
+function drawPlayhead(x, chromeH, h) {
+  // glow
+  ctx.save();
+  ctx.shadowColor = 'rgba(155, 207, 111, 0.55)';
+  ctx.shadowBlur = 10;
+  ctx.strokeStyle = '#ece8de';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x + 0.5, chromeH);
+  ctx.lineTo(x + 0.5, h);
+  ctx.stroke();
+  ctx.restore();
+
+  // head pip
+  ctx.fillStyle = '#ece8de';
+  ctx.beginPath();
+  ctx.moveTo(x - 5, chromeH);
+  ctx.lineTo(x + 5, chromeH);
+  ctx.lineTo(x, chromeH + 8);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawDeployMarker(x, chromeH, h) {
+  ctx.strokeStyle = 'rgba(224, 160, 96, 0.55)';
+  ctx.setLineDash([4, 4]);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x + 0.5, chromeH);
+  ctx.lineTo(x + 0.5, h);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // tag
+  ctx.fillStyle = 'rgba(224, 160, 96, 0.9)';
+  ctx.fillRect(x, chromeH + 4, 48, 12);
+  ctx.fillStyle = '#0a0a0c';
+  ctx.font = '500 8px "IBM Plex Mono", monospace';
+  ctx.fillText('v2.14.1', x + 4, chromeH + 13);
+}
+
+function render() {
+  const r = canvas.getBoundingClientRect();
+  const w = r.width, h = r.height;
+  const now = (performance.now() - startTime) / 1000;
+  const chromeH = 40;
+  const bodyH = h - chromeH;
+  const labelW = Math.min(180, w * 0.22);
+  const trackH = bodyH / tracks.length;
+
+  offsetX += 0.45;
+
+  // paper
+  ctx.fillStyle = '#0f0f12';
+  ctx.fillRect(0, 0, w, h);
+
+  // grid
+  drawGrid(w, h, chromeH, trackH, labelW);
+
+  // tracks (clip to timeline area)
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(labelW, chromeH, w - labelW, bodyH);
+  ctx.clip();
+
+  for (let i = 0; i < tracks.length; i++) {
+    const ty = chromeH + i * trackH;
+    const track = tracks[i];
+    if (track.type === 'wave') drawWave(track, ty, trackH, labelW, w, now);
+    else if (track.type === 'spans') drawSpans(track, ty, trackH, labelW, w);
+  }
+
+  // deploy marker drifting across
+  const deployX = labelW + ((w - labelW) * 1.4 - (offsetX * 0.8) % ((w - labelW) * 1.6));
+  if (deployX > labelW && deployX < w) {
+    drawDeployMarker(deployX, chromeH, h);
+  }
+
+  ctx.restore();
+
+  // label column (opaque, on top of any overflow)
+  drawChromePad(labelW, chromeH, bodyH);
+  drawLabels(chromeH, trackH, labelW);
+
+  // playhead — fixed at ~72% across
+  const playheadX = labelW + (w - labelW) * 0.72;
+  drawPlayhead(playheadX, chromeH, h);
+
+  // timecode
+  const tc = document.getElementById('tc');
+  if (tc) {
+    const totalMs = 97204 + Math.floor(now * 180);
+    const mm = Math.floor(totalMs / 60000);
+    const ss = Math.floor((totalMs % 60000) / 1000);
+    const ms = totalMs % 1000;
+    tc.textContent =
+      '00:' + String(mm).padStart(2, '0') +
+      ':' + String(ss).padStart(2, '0') +
+      '.' + String(ms).padStart(3, '0');
+  }
+
+  requestAnimationFrame(render);
+}
+requestAnimationFrame(render);
+
+// ═══════════════════════════════════════ TOPOLOGY CARTOGRAPH
+//
+// A topographic map of a distributed system. The terrain is a real elevation
+// field — gaussian peaks at each region, plus 2D noise for irregularity.
+// Contour lines are extracted by marching squares, then drawn with a penciled
+// double-stroke so each isoline reads as hand-inked. Services are hand-placed
+// "cities" with labels and types. Traces animate in one at a time as smooth
+// unbroken routes, like revealing a journey on a paper map.
+
+const topoCanvas = document.getElementById('topo');
+const topoCtx = topoCanvas.getContext('2d');
+
+function fitTopo() {
+  if (!topoCanvas) return;
+  const r = topoCanvas.getBoundingClientRect();
+  topoCanvas.width = Math.floor(r.width * dpr);
+  topoCanvas.height = Math.floor(r.height * dpr);
+  topoCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+fitTopo();
+
+function smoothstep(e0, e1, x) {
+  const t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0)));
+  return t * t * (3 - 2 * t);
+}
+
+// ——— 2D value noise for terrain ——————————————————————————————
+function noise2D(x, y, seed) {
+  const xi = Math.floor(x), yi = Math.floor(y);
+  const xf = x - xi, yf = y - yi;
+  const h00 = hash(xi * 13.37 + yi * 7.11, seed);
+  const h10 = hash((xi + 1) * 13.37 + yi * 7.11, seed);
+  const h01 = hash(xi * 13.37 + (yi + 1) * 7.11, seed);
+  const h11 = hash((xi + 1) * 13.37 + (yi + 1) * 7.11, seed);
+  const u = xf * xf * (3 - 2 * xf);
+  const v = yf * yf * (3 - 2 * yf);
+  return (h00 * (1 - u) + h10 * u) * (1 - v)
+       + (h01 * (1 - u) + h11 * u) * v;
+}
+function fbm2D(x, y, seed) {
+  return noise2D(x, y, seed) * 0.5
+       + noise2D(x * 2, y * 2, seed + 1) * 0.25
+       + noise2D(x * 4, y * 4, seed + 2) * 0.125
+       + noise2D(x * 8, y * 8, seed + 3) * 0.0625;
+}
+
+// ——— Regions (gaussian peaks in the elevation field) ——————————
+const regions = [
+  { cx: -0.58, cy: -0.28, r: 0.32, label: 'us-east-1',  sub: 'edge ingress'  },
+  { cx: -0.05, cy:  0.24, r: 0.42, label: 'us-west-2',  sub: 'commerce core' },
+  { cx:  0.58, cy: -0.30, r: 0.26, label: 'eu-west-1',  sub: 'data plane'    },
+  { cx:  0.48, cy:  0.48, r: 0.22, label: 'ap-south-1', sub: 'inference'     },
+  { cx: -0.58, cy:  0.48, r: 0.20, label: 'internal',   sub: 'infra'         },
+];
+
+// ——— Services (hand-placed "cities") ——————————————————————————
+// `anchor` sets label side. `type` is the service class (tiny subscript at
+// close zoom). `capital: true` marks a critical service — larger dot, ring,
+// bolder label, always visible.
+const serviceSpec = {
+  'us-east-1': [
+    { name: 'api-gateway',   rx: -0.10, ry: -0.06, type: 'api',   capital: true, anchor: 'r' },
+    { name: 'nginx-edge',    rx:  0.12, ry: -0.14, type: 'proxy', anchor: 'r' },
+    { name: 'auth-service',  rx: -0.16, ry:  0.06, type: 'auth',  anchor: 'l' },
+    { name: 'sessions',      rx:  0.04, ry:  0.12, type: 'cache', anchor: 'r' },
+    { name: 'cdn-origin',    rx:  0.16, ry:  0.02, type: 'cache', anchor: 'r' },
+    { name: 'rate-limiter',  rx: -0.05, ry:  0.18, type: 'gate',  anchor: 'b' },
+  ],
+  'us-west-2': [
+    { name: 'orders',     rx: -0.24, ry: -0.12, type: 'api', anchor: 'l' },
+    { name: 'payments',   rx:  0.04, ry: -0.20, type: 'api', capital: true, anchor: 't' },
+    { name: 'checkout',   rx: -0.08, ry: -0.02, type: 'api', anchor: 'r' },
+    { name: 'inventory',  rx:  0.18, ry:  0.08, type: 'api', anchor: 'r' },
+    { name: 'pricing',    rx:  0.24, ry: -0.06, type: 'api', anchor: 'r' },
+    { name: 'search',     rx: -0.24, ry:  0.10, type: 'api', anchor: 'l' },
+    { name: 'catalog',    rx:  0.18, ry:  0.18, type: 'api', anchor: 'r' },
+  ],
+  'eu-west-1': [
+    { name: 'clickhouse-01', rx: -0.11, ry: -0.06, type: 'db',    anchor: 'l' },
+    { name: 'kafka-a',       rx:  0.07, ry: -0.11, type: 'queue', capital: true, anchor: 'r' },
+    { name: 'kafka-b',       rx:  0.13, ry:  0.02, type: 'queue', anchor: 'r' },
+    { name: 'etl-stream',    rx: -0.05, ry:  0.10, type: 'pipe',  anchor: 'b' },
+    { name: 'warehouse',     rx:  0.11, ry:  0.12, type: 'db',    anchor: 'r' },
+  ],
+  'ap-south-1': [
+    { name: 'embed-svc', rx: -0.08, ry: -0.04, type: 'infer', capital: true, anchor: 'l' },
+    { name: 'rank-svc',  rx:  0.07, ry:  0.00, type: 'infer', anchor: 'r' },
+    { name: 'llm-proxy', rx:  0.00, ry:  0.11, type: 'infer', anchor: 'b' },
+  ],
+  'internal': [
+    { name: 'redis',       rx: -0.06, ry: -0.04, type: 'cache', anchor: 'l' },
+    { name: 'postgres-03', rx:  0.06, ry:  0.03, type: 'db',    capital: true, anchor: 'r' },
+    { name: 'vault',       rx:  0.00, ry:  0.11, type: 'sec',   anchor: 'b' },
+  ],
+};
+
+const nodes = {};
+regions.forEach(reg => {
+  (serviceSpec[reg.label] || []).forEach(s => {
+    nodes[s.name] = {
+      x: reg.cx + s.rx, y: reg.cy + s.ry, region: reg,
+      name: s.name, type: s.type, capital: !!s.capital, anchor: s.anchor || 'r',
+    };
   });
 });
+const allNodes = Object.values(nodes);
+
+// ——— Elevation field + contour extraction ——————————————————————
+function elevation(x, y) {
+  let e = 0.15; // baseline
+  regions.forEach(reg => {
+    const dx = x - reg.cx, dy = y - reg.cy;
+    const sigma = reg.r * 0.85;
+    e += Math.exp(-(dx * dx + dy * dy) / (sigma * sigma * 2)) * 1.05;
+  });
+  e += fbm2D(x * 3 + 4, y * 3 + 11, 1.5) * 0.22;
+  e += fbm2D(x * 7 + 19, y * 7 + 5, 2.7) * 0.08;
+  return e;
+}
+
+const GRID_W = 84, GRID_H = 56;
+const X_MIN = -1.2, X_MAX = 1.2, Y_MIN = -0.95, Y_MAX = 0.95;
+const elevGrid = new Float32Array(GRID_W * GRID_H);
+for (let j = 0; j < GRID_H; j++) {
+  for (let i = 0; i < GRID_W; i++) {
+    const x = X_MIN + (X_MAX - X_MIN) * i / (GRID_W - 1);
+    const y = Y_MIN + (Y_MAX - Y_MIN) * j / (GRID_H - 1);
+    elevGrid[j * GRID_W + i] = elevation(x, y);
+  }
+}
+function cellWorld(i, j) {
+  return [
+    X_MIN + (X_MAX - X_MIN) * i / (GRID_W - 1),
+    Y_MIN + (Y_MAX - Y_MIN) * j / (GRID_H - 1),
+  ];
+}
+// Marching squares: for each grid cell, emit line segments where the
+// elevation contour at `level` crosses the cell.
+function marchingSquares(level) {
+  const segs = [];
+  for (let j = 0; j < GRID_H - 1; j++) {
+    for (let i = 0; i < GRID_W - 1; i++) {
+      const v00 = elevGrid[j * GRID_W + i];
+      const v10 = elevGrid[j * GRID_W + i + 1];
+      const v11 = elevGrid[(j + 1) * GRID_W + i + 1];
+      const v01 = elevGrid[(j + 1) * GRID_W + i];
+      let idx = 0;
+      if (v00 > level) idx |= 1;
+      if (v10 > level) idx |= 2;
+      if (v11 > level) idx |= 4;
+      if (v01 > level) idx |= 8;
+      if (idx === 0 || idx === 15) continue;
+
+      const [p00x, p00y] = cellWorld(i, j);
+      const [p10x, p10y] = cellWorld(i + 1, j);
+      const [p11x, p11y] = cellWorld(i + 1, j + 1);
+      const [p01x, p01y] = cellWorld(i, j + 1);
+      const itp = (a, b, va, vb) => a + (b - a) * ((level - va) / (vb - va || 1e-9));
+      const bx = itp(p00x, p10x, v00, v10), by = p00y;
+      const rx = p10x, ry = itp(p10y, p11y, v10, v11);
+      const tx = itp(p01x, p11x, v01, v11), ty = p01y;
+      const lx = p00x, ly = itp(p00y, p01y, v00, v01);
+
+      switch (idx) {
+        case 1: case 14: segs.push([bx, by, lx, ly]); break;
+        case 2: case 13: segs.push([bx, by, rx, ry]); break;
+        case 3: case 12: segs.push([lx, ly, rx, ry]); break;
+        case 4: case 11: segs.push([rx, ry, tx, ty]); break;
+        case 5: segs.push([bx, by, rx, ry]); segs.push([lx, ly, tx, ty]); break;
+        case 6: case 9:  segs.push([bx, by, tx, ty]); break;
+        case 7: case 8:  segs.push([lx, ly, tx, ty]); break;
+        case 10: segs.push([bx, by, lx, ly]); segs.push([rx, ry, tx, ty]); break;
+      }
+    }
+  }
+  return segs;
+}
+const CONTOUR_LEVELS = [0.32, 0.48, 0.62, 0.76, 0.88, 0.96];
+const contours = CONTOUR_LEVELS.map(level => ({ level, segs: marchingSquares(level) }));
+
+// ——— Traces (one active at a time, cycling) ————————————————————
+const traces = [
+  { id: 'login',
+    path: ['api-gateway', 'auth-service', 'sessions', 'catalog'],
+    color: '#d8d3c7' },
+  { id: 'checkout',
+    path: ['api-gateway', 'checkout', 'inventory', 'pricing', 'payments'],
+    segColors: ['#d8d3c7', '#d8d3c7', '#e0a060', '#d8d3c7'] },
+  { id: 'search',
+    path: ['api-gateway', 'search', 'embed-svc', 'rank-svc'],
+    color: '#9bcf6f' },
+];
+const TRACE_SLOT = 6;
+const TRACE_CYCLE = TRACE_SLOT * traces.length;
+
+const pins = [
+  { at: 'payments',    color: '#c97560', label: 'INCIDENT · 03:14' },
+  { at: 'api-gateway', color: '#e0a060', label: 'DEPLOY v2.14.1' },
+  { at: 'checkout',    color: '#ece8de', label: 'BOOKMARK' },
+];
+
+// ——— Curve helpers ——————————————————————————————————————————
+function catmullRom(points, tension = 0.5) {
+  const segs = [];
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i - 1] || points[i];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2] || points[i + 1];
+    segs.push({
+      p1,
+      cp1: [p1[0] + (p2[0] - p0[0]) * tension / 6, p1[1] + (p2[1] - p0[1]) * tension / 6],
+      cp2: [p2[0] - (p3[0] - p1[0]) * tension / 6, p2[1] - (p3[1] - p1[1]) * tension / 6],
+      p2,
+    });
+  }
+  return segs;
+}
+// de Casteljau: return the 0..t sub-curve of a cubic bezier.
+function splitBezier(p1, cp1, cp2, p2, t) {
+  const L = (a, b) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  const a = L(p1, cp1), b = L(cp1, cp2), c = L(cp2, p2);
+  const d = L(a, b), e = L(b, c);
+  return { cp1: a, cp2: d, p2: L(d, e) };
+}
+
+function drawPin(sx, sy, color, label, labelAlpha) {
+  const stemH = 13, headR = 3.8;
+  topoCtx.save();
+  // shadow on the ground — implies the pin is physical
+  topoCtx.fillStyle = 'rgba(0, 0, 0, 0.32)';
+  topoCtx.beginPath();
+  topoCtx.ellipse(sx + 1, sy + 1, 3.4, 1.4, 0, 0, Math.PI * 2);
+  topoCtx.fill();
+  // stem
+  topoCtx.strokeStyle = color;
+  topoCtx.lineWidth = 1.2;
+  topoCtx.lineCap = 'round';
+  topoCtx.beginPath();
+  topoCtx.moveTo(sx, sy);
+  topoCtx.lineTo(sx, sy - stemH);
+  topoCtx.stroke();
+  // head
+  topoCtx.fillStyle = color;
+  topoCtx.beginPath();
+  topoCtx.arc(sx, sy - stemH - headR + 1, headR, 0, Math.PI * 2);
+  topoCtx.fill();
+  topoCtx.fillStyle = '#0a0a0c';
+  topoCtx.beginPath();
+  topoCtx.arc(sx, sy - stemH - headR + 1, 1.2, 0, Math.PI * 2);
+  topoCtx.fill();
+  // ground point
+  topoCtx.fillStyle = color;
+  topoCtx.beginPath();
+  topoCtx.arc(sx, sy, 1.5, 0, Math.PI * 2);
+  topoCtx.fill();
+  if (labelAlpha > 0.25 && label) {
+    topoCtx.font = '500 8px "IBM Plex Mono", monospace';
+    topoCtx.fillStyle = color;
+    topoCtx.globalAlpha = labelAlpha;
+    topoCtx.fillText(label, sx + headR + 6, sy - stemH - headR + 3);
+    topoCtx.globalAlpha = 1;
+  }
+  topoCtx.restore();
+}
+
+function drawTrace(trace, phase, opacity, W2S) {
+  const nodePath = trace.path.map(name => nodes[name]).filter(Boolean);
+  if (nodePath.length < 2) return;
+  const screenPts = nodePath.map(n => W2S(n.x, n.y));
+  const segs = catmullRom(screenPts);
+  const N = segs.length;
+  const curIdx = Math.min(Math.floor(phase * N), N - 1);
+  const curT = Math.max(0, Math.min(1, phase * N - curIdx));
+
+  // Glow — one continuous path up to the current reveal position.
+  topoCtx.globalAlpha = opacity * 0.18;
+  topoCtx.lineWidth = 4.4;
+  topoCtx.strokeStyle = trace.color || trace.segColors[0];
+  topoCtx.beginPath();
+  topoCtx.moveTo(segs[0].p1[0], segs[0].p1[1]);
+  for (let i = 0; i < curIdx; i++) {
+    const s = segs[i];
+    topoCtx.bezierCurveTo(s.cp1[0], s.cp1[1], s.cp2[0], s.cp2[1], s.p2[0], s.p2[1]);
+  }
+  {
+    const s = segs[curIdx];
+    const sp = splitBezier(s.p1, s.cp1, s.cp2, s.p2, curT);
+    topoCtx.bezierCurveTo(sp.cp1[0], sp.cp1[1], sp.cp2[0], sp.cp2[1], sp.p2[0], sp.p2[1]);
+  }
+  topoCtx.stroke();
+
+  // Per-segment colored stroke
+  topoCtx.globalAlpha = opacity;
+  topoCtx.lineWidth = 1.6;
+  for (let i = 0; i < curIdx; i++) {
+    const s = segs[i];
+    topoCtx.strokeStyle = trace.segColors ? trace.segColors[i] : trace.color;
+    topoCtx.beginPath();
+    topoCtx.moveTo(s.p1[0], s.p1[1]);
+    topoCtx.bezierCurveTo(s.cp1[0], s.cp1[1], s.cp2[0], s.cp2[1], s.p2[0], s.p2[1]);
+    topoCtx.stroke();
+  }
+  {
+    const s = segs[curIdx];
+    const sp = splitBezier(s.p1, s.cp1, s.cp2, s.p2, curT);
+    topoCtx.strokeStyle = trace.segColors ? trace.segColors[curIdx] : trace.color;
+    topoCtx.beginPath();
+    topoCtx.moveTo(s.p1[0], s.p1[1]);
+    topoCtx.bezierCurveTo(sp.cp1[0], sp.cp1[1], sp.cp2[0], sp.cp2[1], sp.p2[0], sp.p2[1]);
+    topoCtx.stroke();
+  }
+
+  // Origin marker — filled circle with an outer ring, centered on source.
+  const o = screenPts[0];
+  const startCol = trace.segColors ? trace.segColors[0] : trace.color;
+  topoCtx.fillStyle = '#0a0a0c';
+  topoCtx.beginPath(); topoCtx.arc(o[0], o[1], 4.2, 0, Math.PI * 2); topoCtx.fill();
+  topoCtx.fillStyle = startCol;
+  topoCtx.beginPath(); topoCtx.arc(o[0], o[1], 3, 0, Math.PI * 2); topoCtx.fill();
+  topoCtx.fillStyle = '#0a0a0c';
+  topoCtx.beginPath(); topoCtx.arc(o[0], o[1], 1, 0, Math.PI * 2); topoCtx.fill();
+
+  // Destination arrow — points along the final tangent, only when revealed.
+  if (phase > 0.98) {
+    const last = segs[segs.length - 1];
+    const d = screenPts[screenPts.length - 1];
+    const tx = d[0] - last.cp2[0], ty = d[1] - last.cp2[1];
+    const tl = Math.sqrt(tx * tx + ty * ty) || 1;
+    const dx = tx / tl, dy = ty / tl;
+    const px = -dy, py = dx;
+    const endCol = trace.segColors ? trace.segColors[trace.segColors.length - 1] : trace.color;
+    topoCtx.fillStyle = endCol;
+    topoCtx.beginPath();
+    topoCtx.moveTo(d[0] + dx * 7,        d[1] + dy * 7);
+    topoCtx.lineTo(d[0] - dx * 2 + px * 4, d[1] - dy * 2 + py * 4);
+    topoCtx.lineTo(d[0] - dx * 2 - px * 4, d[1] - dy * 2 - py * 4);
+    topoCtx.closePath();
+    topoCtx.fill();
+  }
+
+  topoCtx.globalAlpha = 1;
+}
+
+// ——— Main render ———————————————————————————————————————————
+function renderTopo() {
+  if (!topoCanvas) return;
+  const r = topoCanvas.getBoundingClientRect();
+  const w = r.width, h = r.height;
+  const now = (performance.now() - startTime) / 1000;
+  const chromeH = 40;
+  const bodyH = h - chromeH;
+  if (w <= 0 || bodyH <= 0) { requestAnimationFrame(renderTopo); return; }
+
+  // Slow oscillating zoom — 70s period.
+  const zoomPhase = (Math.sin(now * (Math.PI * 2) / 70) + 1) / 2;
+  const zoom = 1.0 + zoomPhase * 1.35;
+
+  // Active trace, with timing:  0-2s reveal · 2-5s hold · 5-6s fade.
+  const t = now % TRACE_CYCLE;
+  const slot = Math.floor(t / TRACE_SLOT);
+  const local = t - slot * TRACE_SLOT;
+  const trace = traces[slot];
+  const phase = local < 2 ? local / 2 : 1;
+  const opacity = local < 5 ? 1 : Math.max(0, 1 - (local - 5));
+
+  // Focus follows the mean position of the active trace's nodes.
+  const tracePath = trace.path.map(n => nodes[n]).filter(Boolean);
+  let fx = 0, fy = 0;
+  tracePath.forEach(n => { fx += n.x; fy += n.y; });
+  fx /= tracePath.length || 1; fy /= tracePath.length || 1;
+
+  const panX = Math.cos(now * 0.03) * 0.015;
+  const panY = Math.sin(now * 0.025) * 0.015;
+
+  const screenCx = w / 2;
+  const screenCy = chromeH + bodyH / 2;
+  const baseScale = Math.min(w, bodyH) * 0.46;
+  const scale = baseScale * zoom;
+  const translateStrength = smoothstep(1.0, 2.0, zoom);
+  const offX = (fx + panX) * translateStrength;
+  const offY = (fy + panY) * translateStrength;
+  function W2S(x, y) {
+    return [screenCx + (x - offX) * scale, screenCy + (y - offY) * scale];
+  }
+
+  topoCtx.fillStyle = '#0f0f12';
+  topoCtx.fillRect(0, 0, w, h);
+
+  // Graticule
+  topoCtx.strokeStyle = 'rgba(61, 58, 51, 0.20)';
+  topoCtx.lineWidth = 1;
+  for (let g = -3; g <= 3; g += 0.25) {
+    const [, sy] = W2S(0, g);
+    if (sy > chromeH && sy < h) {
+      topoCtx.beginPath();
+      topoCtx.moveTo(0, sy + 0.5); topoCtx.lineTo(w, sy + 0.5);
+      topoCtx.stroke();
+    }
+    const [sx, ] = W2S(g, 0);
+    if (sx > 0 && sx < w) {
+      topoCtx.beginPath();
+      topoCtx.moveTo(sx + 0.5, chromeH); topoCtx.lineTo(sx + 0.5, h);
+      topoCtx.stroke();
+    }
+  }
+
+  // ——— Contour lines ———
+  // Each contour level drawn as one batched path, then re-drawn with jitter
+  // for a penciled / hand-inked feel. Line weight + opacity scale with level
+  // so peaks (regions) read as higher elevation.
+  contours.forEach(({ level, segs }) => {
+    const baseAlpha = 0.10 + Math.pow(level, 1.4) * 0.42;
+    const lw = level > 0.7 ? 1 : 0.65;
+    for (let pass = 0; pass < 2; pass++) {
+      topoCtx.strokeStyle = `rgba(216, 211, 199, ${baseAlpha * (pass === 0 ? 1 : 0.52)})`;
+      topoCtx.lineWidth = pass === 0 ? lw : lw * 0.78;
+      topoCtx.beginPath();
+      for (let si = 0; si < segs.length; si++) {
+        const [x1, y1, x2, y2] = segs[si];
+        const [sx1, sy1] = W2S(x1, y1);
+        const [sx2, sy2] = W2S(x2, y2);
+        const jA = 0.7;
+        const jx1 = (hash(si + pass * 137, level * 10) - 0.5) * jA;
+        const jy1 = (hash(si + pass * 137 + 0.3, level * 10 + 1) - 0.5) * jA;
+        const jx2 = (hash(si + pass * 137 + 0.5, level * 10 + 2) - 0.5) * jA;
+        const jy2 = (hash(si + pass * 137 + 0.8, level * 10 + 3) - 0.5) * jA;
+        topoCtx.moveTo(sx1 + jx1, sy1 + jy1);
+        topoCtx.lineTo(sx2 + jx2, sy2 + jy2);
+      }
+      topoCtx.stroke();
+    }
+  });
+
+  // ——— Active trace (beneath dots) ———
+  topoCtx.lineCap = 'round';
+  topoCtx.lineJoin = 'round';
+  if (trace && opacity > 0) drawTrace(trace, phase, opacity, W2S);
+
+  // ——— Service dots ———
+  allNodes.forEach(n => {
+    const [sx, sy] = W2S(n.x, n.y);
+    const rad = n.capital ? 2.4 : 1.7;
+    topoCtx.fillStyle = '#0f0f12';
+    topoCtx.beginPath(); topoCtx.arc(sx, sy, rad + 1.7, 0, Math.PI * 2); topoCtx.fill();
+    topoCtx.fillStyle = '#ece8de';
+    topoCtx.beginPath(); topoCtx.arc(sx, sy, rad, 0, Math.PI * 2); topoCtx.fill();
+    if (n.capital) {
+      topoCtx.strokeStyle = 'rgba(236, 232, 222, 0.7)';
+      topoCtx.lineWidth = 0.8;
+      topoCtx.beginPath(); topoCtx.arc(sx, sy, rad + 2.8, 0, Math.PI * 2); topoCtx.stroke();
+    }
+  });
+
+  // ——— Service labels (anchor-aware, with type subtitles) ———
+  const smallAlpha = smoothstep(1.25, 1.75, zoom);
+  const typeAlpha  = smoothstep(1.75, 2.15, zoom);
+  allNodes.forEach(n => {
+    const [sx, sy] = W2S(n.x, n.y);
+    if (sx < -160 || sx > w + 160 || sy < chromeH - 20 || sy > h + 20) return;
+    const alpha = n.capital ? 1 : smallAlpha;
+    if (alpha < 0.02) return;
+
+    topoCtx.font = n.capital
+      ? '500 10px "IBM Plex Mono", monospace'
+      : '400 9px "IBM Plex Mono", monospace';
+    topoCtx.fillStyle = n.capital
+      ? `rgba(236, 232, 222, ${alpha})`
+      : `rgba(236, 232, 222, ${alpha * 0.84})`;
+
+    let lx = sx, ly = sy, align = 'start', typeDy = 10;
+    switch (n.anchor) {
+      case 'r': lx = sx + 9;  ly = sy + 3;   align = 'start';  break;
+      case 'l': lx = sx - 9;  ly = sy + 3;   align = 'end';    break;
+      case 't': lx = sx;      ly = sy - 9;   align = 'center'; typeDy = -9; break;
+      case 'b': lx = sx;      ly = sy + 15;  align = 'center'; break;
+    }
+    topoCtx.textAlign = align;
+    topoCtx.fillText(n.name, lx, ly);
+
+    if (typeAlpha > 0.02 && n.type) {
+      topoCtx.font = '500 7px "IBM Plex Mono", monospace';
+      topoCtx.fillStyle = `rgba(122, 118, 109, ${typeAlpha * 0.95})`;
+      topoCtx.fillText(n.type.toUpperCase(), lx, ly + typeDy);
+    }
+  });
+  topoCtx.textAlign = 'start';
+
+  // ——— Region labels (tracked caps + serif subtitle) ———
+  const regLabelAlpha = smoothstep(1.7, 1.0, zoom);
+  if (regLabelAlpha > 0.02) {
+    regions.forEach(reg => {
+      const [lsx, lsy] = W2S(reg.cx, reg.cy);
+      topoCtx.font = '500 12px "IBM Plex Mono", monospace';
+      const txt = reg.label.toUpperCase();
+      const tracking = 2.5;
+      const totalW = topoCtx.measureText(txt).width + tracking * (txt.length - 1);
+      let cx = lsx - totalW / 2;
+      topoCtx.fillStyle = `rgba(236, 232, 222, ${regLabelAlpha * 0.88})`;
+      topoCtx.textAlign = 'start';
+      for (let i = 0; i < txt.length; i++) {
+        topoCtx.fillText(txt[i], cx, lsy - 6);
+        cx += topoCtx.measureText(txt[i]).width + tracking;
+      }
+      topoCtx.textAlign = 'center';
+      topoCtx.font = 'italic 400 10px "IBM Plex Serif", serif';
+      topoCtx.fillStyle = `rgba(158, 152, 140, ${regLabelAlpha * 0.78})`;
+      topoCtx.fillText(reg.sub, lsx, lsy + 9);
+    });
+    topoCtx.textAlign = 'start';
+  }
+
+  // ——— Pins ———
+  pins.forEach(p => {
+    const n = nodes[p.at];
+    if (!n) return;
+    const [sx, sy] = W2S(n.x, n.y);
+    drawPin(sx, sy, p.color, p.label, Math.max(smallAlpha, 0.4));
+  });
+
+  // ——— Pulse on the incident pin ———
+  const incident = pins.find(p => p.color === '#c97560');
+  const pulseNode = incident ? nodes[incident.at] : allNodes[0];
+  const pulseT = (now % 3.2) / 3.2;
+  if (pulseNode && pulseT < 0.85) {
+    const [sx, sy] = W2S(pulseNode.x, pulseNode.y);
+    const pr = 5 + pulseT * 34;
+    const pa = (1 - pulseT / 0.85) * 0.5;
+    topoCtx.strokeStyle = `rgba(201, 117, 96, ${pa})`;
+    topoCtx.lineWidth = 1;
+    topoCtx.beginPath();
+    topoCtx.arc(sx, sy, pr, 0, Math.PI * 2);
+    topoCtx.stroke();
+  }
+
+  // ——— Scale bar ———
+  const barLen = 60, barY = h - 18, barX = w - barLen - 20;
+  topoCtx.strokeStyle = 'rgba(122, 118, 109, 0.55)';
+  topoCtx.lineWidth = 1;
+  topoCtx.beginPath();
+  topoCtx.moveTo(barX, barY); topoCtx.lineTo(barX + barLen, barY);
+  topoCtx.moveTo(barX, barY - 3); topoCtx.lineTo(barX, barY + 3);
+  topoCtx.moveTo(barX + barLen, barY - 3); topoCtx.lineTo(barX + barLen, barY + 3);
+  topoCtx.stroke();
+  topoCtx.fillStyle = 'rgba(122, 118, 109, 0.75)';
+  topoCtx.font = '400 8px "IBM Plex Mono", monospace';
+  topoCtx.textAlign = 'right';
+  topoCtx.fillText(`${Math.round(500 / zoom)} hosts`, barX + barLen, barY - 6);
+  topoCtx.textAlign = 'start';
+
+  // ——— Chrome readouts ———
+  const zoomEl = document.getElementById('zoom');
+  if (zoomEl) zoomEl.textContent = zoom.toFixed(2);
+  const coordEl = document.getElementById('coord');
+  if (coordEl) {
+    const lat = -(fy + panY) * 85;
+    const lon = (fx + panX) * 170;
+    coordEl.textContent =
+      `${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? 'N' : 'S'} · ` +
+      `${Math.abs(lon).toFixed(2)}° ${lon >= 0 ? 'E' : 'W'}`;
+  }
+
+  requestAnimationFrame(renderTopo);
+}
+requestAnimationFrame(renderTopo);
+
+// ═══════════════════════════════════════ WAITLIST
+
+function submitEmail(e) {
+  e.preventDefault();
+  const input = document.getElementById('email');
+  const btn = document.getElementById('submit');
+  const note = document.getElementById('note');
+  const email = input.value.trim();
+
+  if (!email.includes('@')) {
+    note.textContent = "Email address required.";
+    note.className = 'note error';
+    return false;
+  }
+
+  const token = (window.turnstile && window.turnstile.getResponse()) || '';
+  if (!token) {
+    note.textContent = "Complete the challenge to continue.";
+    note.className = 'note error';
+    return false;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  note.textContent = '';
+  note.className = 'note';
+
+  fetch('/api/waitlist', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, token })
+  })
+    .then(r => r.json().then(j => ({ ok: r.ok, j })))
+    .then(({ ok, j }) => {
+      if (ok) {
+        btn.textContent = 'On the list';
+        note.textContent = "You'll hear from us when access opens.";
+        note.className = 'note ok';
+        input.disabled = true;
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'Request access';
+        note.textContent = (j && j.error) || 'Something went wrong. Try again.';
+        note.className = 'note error';
+      }
+    })
+    .catch(() => {
+      btn.disabled = false;
+      btn.textContent = 'Request access';
+      note.textContent = 'Network error. Try again.';
+      note.className = 'note error';
+    });
+
+  return false;
+}
 </script>
+
 </body>
 </html>
