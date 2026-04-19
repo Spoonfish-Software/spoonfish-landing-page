@@ -67,14 +67,6 @@
     display: inline-flex; align-items: center; gap: 12px;
   }
 
-  .mark-dot {
-    width: 7px; height: 7px;
-    background: var(--phosphor);
-    border-radius: 50%;
-    box-shadow: 0 0 10px rgba(155, 207, 111, 0.6);
-    animation: breathe 3.2s ease-in-out infinite;
-  }
-
   @keyframes breathe {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.45; transform: scale(0.85); }
@@ -327,6 +319,390 @@
     border: 1px solid var(--rule);
   }
 
+  /* ═══════════════════════════════════════ LOG STREAM */
+
+  .log-scope {
+    height: auto;
+    overflow: visible;
+    display: flex; flex-direction: column;
+  }
+  .log-scope .scope-chrome {
+    position: static;
+    background: rgba(8, 8, 10, 0.92);
+    flex-shrink: 0;
+  }
+  .log-scope canvas {
+    width: 100%;
+    height: 104px;
+    display: block;
+    background: #08080a;
+    border-bottom: 1px solid var(--rule);
+    flex-shrink: 0;
+  }
+
+  .log-list {
+    font: 400 12.5px/1.4 var(--mono);
+    padding: 6px 0 10px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .log-row {
+    display: grid;
+    grid-template-columns: 100px 50px 46px 1fr;
+    column-gap: 16px;
+    align-items: baseline;
+    padding: 9px 22px 9px 14px;
+    border-left: 4px solid transparent;
+    position: relative;
+    letter-spacing: 0.005em;
+    transition: background 200ms ease;
+  }
+
+  .log-row .ts    { color: var(--ink-faint); font-size: 11px; letter-spacing: 0.02em; }
+  .log-row .sev   { font-size: 10px; letter-spacing: 0.12em; font-weight: 500; }
+  .log-row .count { color: var(--ink-faint); font-size: 11px; letter-spacing: 0.02em; }
+  .log-row .msg   { color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .log-row .msg .fields { color: var(--ink-dim); }
+
+  .log-row.row-error { border-left-color: var(--error); }
+  .log-row.row-warn  { border-left-color: var(--amber); }
+
+  .log-row .sev-error { color: var(--error); }
+  .log-row .sev-warn  { color: var(--amber); }
+  .log-row .sev-info  { color: var(--ink-dim); }
+  .log-row .sev-debug { color: var(--ink-faint); }
+
+  .log-row.faded               { opacity: 0.3; }
+  .log-row.faded .msg          { color: var(--ink-dim); }
+  .log-row.faded .msg .fields  { color: var(--ink-faint); }
+
+  .log-row.hot {
+    background: rgba(201, 117, 96, 0.05);
+    animation: log-error-breathe 3.2s ease-in-out infinite;
+  }
+  @keyframes log-error-breathe {
+    0%, 100% { background: rgba(201, 117, 96, 0.05); }
+    50%      { background: rgba(201, 117, 96, 0.12); }
+  }
+
+  .log-context {
+    padding: 2px 22px 12px 34px;
+    font: italic 11.5px/1.55 var(--serif);
+    color: var(--ink-dim);
+    border-left: 4px solid transparent;
+    letter-spacing: 0.01em;
+  }
+  .log-context::before {
+    content: "└";
+    color: var(--ink-faint);
+    font-family: var(--mono);
+    font-style: normal;
+    margin-right: 12px;
+  }
+  .log-context .sep {
+    color: var(--ink-faint);
+    margin: 0 6px;
+    font-style: normal;
+  }
+  .log-context em {
+    font-style: italic;
+    color: var(--signal);
+  }
+
+  /* ═══════════════════════════════════════ LOG DIALOG */
+
+  #topo { cursor: default; }
+  #topo.node-hover { cursor: pointer; }
+
+  .log-dialog {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 4vh 24px;
+    pointer-events: none;
+  }
+  .log-dialog.open { display: flex; pointer-events: auto; }
+
+  .log-dialog .scrim {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 8, 10, 0.62);
+    backdrop-filter: blur(3px) saturate(0.7);
+    -webkit-backdrop-filter: blur(3px) saturate(0.7);
+    opacity: 0;
+    transition: opacity 220ms ease;
+  }
+  .log-dialog.open .scrim { opacity: 1; }
+
+  .log-dialog .panel {
+    position: relative;
+    width: min(1080px, 100%);
+    max-height: 92vh;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(8px);
+    opacity: 0;
+    transition: transform 260ms ease, opacity 220ms ease;
+  }
+  .log-dialog.open .panel { transform: translateY(0); opacity: 1; }
+
+  .log-dialog .panel .scope-chrome {
+    position: static;
+    background: rgba(8, 8, 10, 0.92);
+    flex-shrink: 0;
+  }
+
+  .log-dialog .panel canvas#logDensity {
+    width: 100%;
+    height: 104px;
+    display: block;
+    background: #08080a;
+    border-bottom: 1px solid var(--rule);
+    flex-shrink: 0;
+  }
+
+  .log-close {
+    position: absolute;
+    top: 10px; right: 10px;
+    z-index: 2;
+    width: 22px; height: 22px;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    background: transparent;
+    color: var(--ink-dim);
+    border: 1px solid var(--rule);
+    font: 500 11px/1 var(--mono);
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: color 140ms ease, border-color 140ms ease;
+  }
+  .log-close:hover { color: var(--ink); border-color: var(--ink-faint); }
+
+  .log-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--rule);
+    background: rgba(8, 8, 10, 0.55);
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+  .log-toolbar .search {
+    flex: 1 1 220px;
+    min-width: 160px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border: 1px solid var(--rule);
+    background: rgba(10, 10, 12, 0.7);
+  }
+  .log-toolbar .search svg {
+    width: 10px; height: 10px;
+    stroke: var(--ink-faint);
+    fill: none; stroke-width: 1.4;
+    flex-shrink: 0;
+  }
+  .log-toolbar .search input {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    outline: 0;
+    color: var(--ink);
+    font: 400 12px var(--mono);
+    padding: 2px 0;
+    letter-spacing: 0.01em;
+  }
+  .log-toolbar .search input::placeholder {
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+  .log-toolbar .search .hint {
+    color: var(--ink-faint);
+    font: italic 400 10px var(--serif);
+    white-space: nowrap;
+  }
+
+  .log-toolbar .chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .log-toolbar .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 9px;
+    font: 500 10px/1 var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    background: transparent;
+    border: 1px solid var(--rule);
+    cursor: default;
+    white-space: nowrap;
+  }
+  .log-toolbar .chip .dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--ink-faint);
+    flex-shrink: 0;
+  }
+  .log-toolbar .chip.on {
+    color: var(--ink);
+    border-color: var(--ink-faint);
+    background: rgba(236, 232, 222, 0.035);
+  }
+  .log-toolbar .chip.on .dot { background: var(--phosphor); box-shadow: 0 0 6px rgba(155, 207, 111, 0.55); }
+  .log-toolbar .chip .count {
+    color: var(--ink-faint);
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    text-transform: none;
+  }
+
+  .log-dialog .log-list {
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .log-row { padding-right: 96px; }
+  .log-row .actions {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 3px;
+    opacity: 0;
+    transition: opacity 140ms ease;
+    pointer-events: none;
+  }
+  .log-row:hover .actions { opacity: 1; pointer-events: auto; }
+  .log-row .act {
+    width: 20px; height: 20px;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    font: 500 10px/1 var(--mono);
+    color: var(--ink-faint);
+    background: transparent;
+    border: 1px solid var(--rule);
+    cursor: pointer;
+    transition: color 120ms ease, border-color 120ms ease;
+  }
+  .log-row .act:hover { color: var(--ink); border-color: var(--ink-faint); }
+  .log-row .act[data-on="true"] { color: var(--phosphor); border-color: rgba(155, 207, 111, 0.4); }
+
+  .log-row.muted-persist .actions { opacity: 1; pointer-events: auto; }
+  .log-row.muted-persist .act.mute { color: var(--ink-dim); border-color: var(--ink-faint); }
+
+  .log-row.hot .actions { opacity: 1; pointer-events: auto; }
+
+  /* Pin marker — hidden unless row is pinned */
+  .log-row .pin-marker {
+    position: absolute;
+    left: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 8px;
+    color: var(--phosphor);
+    opacity: 0;
+    transition: opacity 140ms ease;
+    pointer-events: none;
+  }
+  .log-row.pinned .pin-marker { opacity: 1; }
+  .log-row.pinned { background: rgba(155, 207, 111, 0.04); }
+
+  /* Baseline delta badge — shown when baseline chip is on */
+  .log-row .baseline-badge {
+    display: none;
+    font: 500 9px/1 var(--mono);
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    padding: 2px 5px;
+    border: 1px solid var(--rule);
+    margin-right: -6px;
+    align-self: center;
+    white-space: nowrap;
+  }
+  body.baseline-on .log-row .baseline-badge { display: inline-block; }
+  body.baseline-on .log-row { grid-template-columns: 100px 50px 46px auto 1fr; }
+
+  .log-row[data-baseline="new"]  .baseline-badge,
+  .log-row[data-baseline="+∞"]  .baseline-badge { color: var(--phosphor); border-color: rgba(155, 207, 111, 0.4); }
+  .log-row[data-baseline^="+"]   .baseline-badge { color: var(--amber); border-color: rgba(224, 160, 96, 0.35); }
+  .log-row[data-baseline^="−"]   .baseline-badge,
+  .log-row[data-baseline="0%"]   .baseline-badge { color: var(--ink-faint); }
+
+  /* Related-highlight — when R is pressed, sibling rows that share a token glow amber */
+  .log-row.related-highlight { background: rgba(224, 160, 96, 0.05); }
+  .log-row.related-highlight::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--amber);
+    opacity: 0.7;
+  }
+  .log-row.related-source { background: rgba(224, 160, 96, 0.08); }
+
+  /* Hidden rows — filters collapse them entirely */
+  .log-row.hidden,
+  .log-context.hidden { display: none !important; }
+
+  /* NOVEL badge — only visible when anomaly chip is on */
+  body.anomaly-on .log-row.novel::after {
+    content: "NEW";
+    position: absolute;
+    top: 10px;
+    right: 96px;
+    font: 500 8px/1 var(--mono);
+    letter-spacing: 0.14em;
+    color: var(--phosphor);
+    opacity: 0.85;
+  }
+  body.anomaly-on .log-row:hover.novel::after { opacity: 0; }
+  /* Hide NEW when baseline is on (baseline-badge shows the same info, more precisely) */
+  body.anomaly-on.baseline-on .log-row.novel::after { display: none; }
+
+  /* Chronological mode — suppress anomaly emphasis */
+  body:not(.anomaly-on) .log-row.hot {
+    background: transparent;
+    animation: none;
+  }
+  body:not(.anomaly-on) .log-row.faded { opacity: 1; }
+  body:not(.anomaly-on) .log-row.faded .msg { color: var(--ink); }
+  body:not(.anomaly-on) .log-row.faded .msg .fields { color: var(--ink-dim); }
+
+  /* Search highlights */
+  .log-row .msg mark {
+    background: rgba(224, 160, 96, 0.18);
+    color: var(--ink);
+    padding: 0 1px;
+  }
+  .log-row .msg mark.primary {
+    background: rgba(224, 160, 96, 0.32);
+    color: var(--ink);
+  }
+
+  /* Empty-state row */
+  .log-empty {
+    padding: 40px 22px;
+    text-align: center;
+    color: var(--ink-faint);
+    font: italic 12px/1.5 var(--serif);
+    letter-spacing: 0.02em;
+  }
+
   /* ═══════════════════════════════════════ WAITLIST */
 
   #waitlist h2 {
@@ -481,7 +857,7 @@
 <body>
 
 <header>
-  <a href="#" class="mark"><span class="mark-dot"></span>Spoonfish</a>
+  <a href="#" class="mark">Spoonfish</a>
   <span class="meta">Private beta · <em>Q3 2026</em></span>
 </header>
 
@@ -558,6 +934,13 @@
           up color as health or latency change along the hops. Pins where it mattered. The
           map doesn't reshuffle. It resolves.
         </p>
+        <p>
+          Click any service. A dialog drops over the map with its logs for the same time window
+          — <em>anomaly-ranked</em>, templates clustered, heartbeat faded. The line that matters
+          comes with the neighbors that matter: the deploy that preceded it, the topology change
+          that coincided with it, the sibling service whose error rate spiked alongside.
+          <strong>Logs as a node in an event graph, not a stream in a silo.</strong>
+        </p>
       </div>
     </div>
 
@@ -570,7 +953,6 @@
           <span>Zoom <span class="sep">/</span> <span id="zoom">1.00</span>×</span>
           <span style="flex:1"></span>
           <span class="tc" id="coord">40.71° N · 74.01° W</span>
-          <span class="live">Live</span>
         </div>
         <canvas id="topo"></canvas>
       </div>
@@ -722,6 +1104,199 @@
   </section>
 
 </main>
+
+<!-- ═══════════════════════════════════════ LOG DIALOG (Fig 003) -->
+<div class="log-dialog" id="logDialog" role="dialog" aria-modal="true" aria-labelledby="logDialogTitle">
+  <div class="scrim" data-close></div>
+  <div class="panel">
+    <button class="log-close" type="button" aria-label="Close" data-close>×</button>
+
+    <div class="scope-chrome">
+      <span id="logDialogTitle">Logs <span class="sep">/</span> <span id="logService">api-gateway</span> <span class="sep">·</span> us-east-1</span>
+      <span>Window <span class="sep">/</span> 40s</span>
+      <span>Events <span class="sep">/</span> <span id="logEvents">1.2M</span></span>
+      <span>Clustered <span class="sep">/</span> <span id="logClustered">23</span></span>
+      <span style="flex:1"></span>
+      <span class="tc">14:23:07.411 UTC</span>
+    </div>
+
+    <canvas id="logDensity"></canvas>
+
+    <div class="log-toolbar">
+      <label class="search">
+        <svg viewBox="0 0 12 12" aria-hidden="true">
+          <circle cx="5" cy="5" r="3.2"/>
+          <line x1="7.5" y1="7.5" x2="10.5" y2="10.5" stroke-linecap="round"/>
+        </svg>
+        <input type="text" placeholder="Semantic search — &ldquo;payment failures after deploy&rdquo;">
+        <span class="hint">embeddings · ready</span>
+      </label>
+      <div class="chips">
+        <span class="chip on" data-key="anomaly" title="Surface lines whose rate diverges from their own baseline"><span class="dot"></span>Anomaly &gt; 2σ</span>
+        <span class="chip on" data-key="heartbeat" title="Hide high-volume repeating templates"><span class="dot"></span>Heartbeat muted <span class="count">×4</span></span>
+        <span class="chip" data-key="baseline" title="Diff against the same window one hour ago"><span class="dot"></span>Baseline /1h</span>
+        <span class="chip" data-key="trace" title="Show only lines on the active trace path"><span class="dot"></span>Trace follow</span>
+      </div>
+    </div>
+
+    <div class="log-list">
+
+      <div class="log-row row-error hot"
+           data-template="payment.charge.timeout"
+           data-ts="7411" data-anomaly="100" data-trace="1"
+           data-tokens="rds-primary deploy-v2.14.1 auth-service order_id payment checkout"
+           data-baseline="new" data-has-context="1"
+           data-raw-msg="payment.charge.timeout { order_id=ord_*, merchant_id=m_*, backend=rds-primary, attempt=5 }">
+        <span class="pin-marker">◆</span>
+        <span class="ts">14:23:07.411</span>
+        <span class="sev sev-error">ERROR</span>
+        <span class="count">×1</span>
+        <span class="baseline-badge">NEW</span>
+        <span class="msg">payment.charge.timeout <span class="fields">{ order_id=ord_*, merchant_id=m_*, backend=rds-primary, attempt=5 }</span></span>
+        <span class="actions">
+          <button class="act mute"   type="button" title="Mute this template">M</button>
+          <button class="act related" type="button" title="Highlight related lines">R</button>
+          <button class="act pin"    type="button" title="Pin to timeline">P</button>
+        </span>
+      </div>
+      <div class="log-context" data-context-for="payment.charge.timeout">
+        <span>+47ms after <em>deploy v2.14.1</em> on api-gateway</span>
+        <span class="sep">·</span>
+        <span>+2.3s after <em>security-group change</em> on rds-primary</span>
+        <span class="sep">·</span>
+        <span>concurrent <em>5xx on auth-service</em></span>
+      </div>
+
+      <div class="log-row row-warn novel"
+           data-template="upstream.retry.exhausted"
+           data-ts="7402" data-anomaly="85" data-trace="1"
+           data-tokens="rds-primary retry backend"
+           data-baseline="+∞"
+           data-raw-msg="upstream.retry.exhausted { backend=rds-primary, attempts=5 }">
+        <span class="pin-marker">◆</span>
+        <span class="ts">14:23:07.402</span>
+        <span class="sev sev-warn">WARN</span>
+        <span class="count">×3</span>
+        <span class="baseline-badge">+∞</span>
+        <span class="msg">upstream.retry.exhausted <span class="fields">{ backend=rds-primary, attempts=5 }</span></span>
+        <span class="actions">
+          <button class="act mute"   type="button" title="Mute this template">M</button>
+          <button class="act related" type="button" title="Highlight related lines">R</button>
+          <button class="act pin"    type="button" title="Pin to timeline">P</button>
+        </span>
+      </div>
+
+      <div class="log-row row-warn"
+           data-template="circuit.breaker.opened"
+           data-ts="6880" data-anomaly="75" data-trace="0"
+           data-tokens="pricing circuit breaker error_rate"
+           data-baseline="+420%"
+           data-raw-msg="circuit.breaker.opened { service=pricing, error_rate=64% }">
+        <span class="pin-marker">◆</span>
+        <span class="ts">14:23:06.880</span>
+        <span class="sev sev-warn">WARN</span>
+        <span class="count">×12</span>
+        <span class="baseline-badge">+420%</span>
+        <span class="msg">circuit.breaker.opened <span class="fields">{ service=pricing, error_rate=64% }</span></span>
+        <span class="actions">
+          <button class="act mute"   type="button" title="Mute this template">M</button>
+          <button class="act related" type="button" title="Highlight related lines">R</button>
+          <button class="act pin"    type="button" title="Pin to timeline">P</button>
+        </span>
+      </div>
+
+      <div class="log-row row-info"
+           data-template="config.hotreload.applied"
+           data-ts="6712" data-anomaly="55" data-trace="0"
+           data-tokens="consul config hotreload"
+           data-baseline="+12%"
+           data-raw-msg="config.hotreload.applied { source=consul, keys=3 }">
+        <span class="pin-marker">◆</span>
+        <span class="ts">14:23:06.712</span>
+        <span class="sev sev-info">INFO</span>
+        <span class="count">×2</span>
+        <span class="baseline-badge">+12%</span>
+        <span class="msg">config.hotreload.applied <span class="fields">{ source=consul, keys=3 }</span></span>
+        <span class="actions">
+          <button class="act mute"   type="button" title="Mute this template">M</button>
+          <button class="act related" type="button" title="Highlight related lines">R</button>
+          <button class="act pin"    type="button" title="Pin to timeline">P</button>
+        </span>
+      </div>
+
+      <div class="log-row row-info faded muted-persist"
+           data-template="request.served"
+           data-ts="7415" data-anomaly="10" data-trace="1"
+           data-tokens="checkout payment /v2/checkout route"
+           data-baseline="−8%"
+           data-raw-msg="request.served { route=/v2/checkout, p50=18ms, p99=42ms }">
+        <span class="pin-marker">◆</span>
+        <span class="ts">14:23:07.415</span>
+        <span class="sev sev-info">INFO</span>
+        <span class="count">×347</span>
+        <span class="baseline-badge">−8%</span>
+        <span class="msg">request.served <span class="fields">{ route=/v2/checkout, p50=18ms, p99=42ms }</span></span>
+        <span class="actions">
+          <button class="act mute"   type="button" title="Muted · click to unmute" data-on="true">M</button>
+        </span>
+      </div>
+
+      <div class="log-row row-info faded muted-persist"
+           data-template="cache.hit"
+           data-ts="7412" data-anomaly="5" data-trace="0"
+           data-tokens="redis-edge cache sessions"
+           data-baseline="−2%"
+           data-raw-msg="cache.hit { store=redis-edge, keyspace=sessions }">
+        <span class="pin-marker">◆</span>
+        <span class="ts">14:23:07.412</span>
+        <span class="sev sev-info">INFO</span>
+        <span class="count">×221</span>
+        <span class="baseline-badge">−2%</span>
+        <span class="msg">cache.hit <span class="fields">{ store=redis-edge, keyspace=sessions }</span></span>
+        <span class="actions">
+          <button class="act mute"   type="button" title="Muted · click to unmute" data-on="true">M</button>
+        </span>
+      </div>
+
+      <div class="log-row row-debug faded muted-persist"
+           data-template="pool.checkout.ok"
+           data-ts="7407" data-anomaly="3" data-trace="0"
+           data-tokens="pg-primary pool"
+           data-baseline="−4%"
+           data-raw-msg="pool.checkout.ok { pool=pg-primary, wait=0.2ms }">
+        <span class="pin-marker">◆</span>
+        <span class="ts">14:23:07.407</span>
+        <span class="sev sev-debug">DEBUG</span>
+        <span class="count">×89</span>
+        <span class="baseline-badge">−4%</span>
+        <span class="msg">pool.checkout.ok <span class="fields">{ pool=pg-primary, wait=0.2ms }</span></span>
+        <span class="actions">
+          <button class="act mute"   type="button" title="Muted · click to unmute" data-on="true">M</button>
+        </span>
+      </div>
+
+      <div class="log-row row-debug faded muted-persist"
+           data-template="heartbeat.tick"
+           data-ts="7400" data-anomaly="0" data-trace="0"
+           data-tokens="heartbeat"
+           data-baseline="0%"
+           data-raw-msg="heartbeat.tick { }">
+        <span class="pin-marker">◆</span>
+        <span class="ts">14:23:07.400</span>
+        <span class="sev sev-debug">DEBUG</span>
+        <span class="count">×54</span>
+        <span class="baseline-badge">0%</span>
+        <span class="msg">heartbeat.tick <span class="fields">{ }</span></span>
+        <span class="actions">
+          <button class="act mute"   type="button" title="Muted · click to unmute" data-on="true">M</button>
+        </span>
+      </div>
+
+      <div class="log-empty" id="logEmpty" hidden>No lines match the current filters.</div>
+
+    </div>
+  </div>
+</div>
 
 <footer>
   <span class="mark-fish">
@@ -1027,6 +1602,7 @@ requestAnimationFrame(render);
 
 const topoCanvas = document.getElementById('topo');
 const topoCtx = topoCanvas.getContext('2d');
+const nodeScreenPositions = [];
 
 function fitTopo() {
   if (!topoCanvas) return;
@@ -1456,9 +2032,11 @@ function renderTopo() {
   if (trace && opacity > 0) drawTrace(trace, phase, opacity, W2S);
 
   // ——— Service dots ———
+  nodeScreenPositions.length = 0;
   allNodes.forEach(n => {
     const [sx, sy] = W2S(n.x, n.y);
     const rad = n.capital ? 2.4 : 1.7;
+    nodeScreenPositions.push({ node: n, sx, sy, r: rad });
     topoCtx.fillStyle = '#0f0f12';
     topoCtx.beginPath(); topoCtx.arc(sx, sy, rad + 1.7, 0, Math.PI * 2); topoCtx.fill();
     topoCtx.fillStyle = '#ece8de';
@@ -1582,6 +2160,166 @@ function renderTopo() {
 }
 requestAnimationFrame(renderTopo);
 
+// ═══════════════════════════════════════ LOG DENSITY (Fig 003)
+
+const logCv = document.getElementById('logDensity');
+let resizeLogDensity = () => {};
+if (logCv) {
+  const lctx = logCv.getContext('2d');
+  let lw = 0, lh = 0, ldpr = 1;
+
+  function resizeLog() {
+    const r = logCv.getBoundingClientRect();
+    ldpr = window.devicePixelRatio || 1;
+    lw = Math.max(1, r.width);
+    lh = Math.max(1, r.height);
+    logCv.width  = Math.round(lw * ldpr);
+    logCv.height = Math.round(lh * ldpr);
+    lctx.setTransform(ldpr, 0, 0, ldpr, 0, 0);
+  }
+  resizeLog();
+  window.addEventListener('resize', resizeLog);
+  resizeLogDensity = resizeLog;
+
+  const BUCKETS = 80;                // 80 × 0.5s = 40s window
+  const INCIDENT_BUCKET = 55;        // where the playhead rests
+  const buckets = [];
+  for (let i = 0; i < BUCKETS; i++) {
+    let info = 3.6 + Math.sin(i * 0.37) * 1.15 + Math.sin(i * 0.11 + 1.3) * 1.5;
+    info = Math.max(1.4, info);
+    let warn = Math.max(0, 0.18 + Math.sin(i * 0.19 + 2.1) * 0.35);
+    let err  = 0;
+
+    if (i >= 50 && i <= 54) {
+      const t = (i - 50) / 4;
+      warn = 1.2 + t * 3.8 + Math.sin(i * 1.7) * 0.35;
+    }
+    if (i >= 54 && i <= 59) {
+      const t = (i - 54) / 5;
+      warn = 5.3 + Math.sin(i * 1.5) * 0.7;
+      err  = 1.4 + t * 3.6 + Math.sin(i * 2.1) * 0.3;
+      if (i === INCIDENT_BUCKET) { warn = 7.2; err = 5.4; }
+    }
+    if (i > 59 && i <= 67) {
+      const decay = (67 - i) / 8;
+      warn = Math.max(warn, 2.7 * decay + Math.sin(i * 1.2) * 0.2);
+      err  = Math.max(0, 2.1 * decay);
+    }
+
+    buckets.push({ info, warn: Math.max(0, warn), err: Math.max(0, err) });
+  }
+
+  const SCALE = 2.9;  // px per unit
+
+  function renderLog(t) {
+    lctx.clearRect(0, 0, lw, lh);
+
+    const padL = 14, padR = 14, padT = 16, padB = 18;
+    const plotW   = Math.max(1, lw - padL - padR);
+    const plotH   = Math.max(1, lh - padT - padB);
+    const barW    = plotW / BUCKETS;
+    const barGap  = Math.max(0.8, barW * 0.18);
+    const barWidth = Math.max(0.5, barW - barGap);
+    const baseline = lh - padB;
+
+    // Faint baseline
+    lctx.strokeStyle = 'rgba(28, 27, 24, 0.9)';
+    lctx.lineWidth = 1;
+    lctx.beginPath();
+    lctx.moveTo(padL, baseline + 0.5);
+    lctx.lineTo(lw - padR, baseline + 0.5);
+    lctx.stroke();
+
+    // Stacked severity bars
+    for (let i = 0; i < BUCKETS; i++) {
+      const b = buckets[i];
+      const x = padL + i * barW + barGap / 2;
+      let y = baseline;
+
+      if (b.info > 0.1) {
+        const h = b.info * SCALE;
+        lctx.fillStyle = 'rgba(122, 118, 109, 0.22)';
+        lctx.fillRect(x, y - h, barWidth, h);
+        y -= h;
+      }
+      if (b.warn > 0.1) {
+        const h = b.warn * SCALE;
+        lctx.fillStyle = 'rgba(224, 160, 96, 0.78)';
+        lctx.fillRect(x, y - h, barWidth, h);
+        y -= h;
+      }
+      if (b.err > 0.1) {
+        const h = b.err * SCALE;
+        lctx.fillStyle = 'rgba(201, 117, 96, 0.95)';
+        lctx.fillRect(x, y - h, barWidth, h);
+        y -= h;
+      }
+    }
+
+    // Live-arrival shimmer on rightmost buckets — signals "streaming in"
+    const liveStart = BUCKETS - 10;
+    for (let i = liveStart; i < BUCKETS; i++) {
+      const x = padL + i * barW + barGap / 2;
+      const d = (i - liveStart) / (BUCKETS - liveStart);
+      const pulse = 0.5 + 0.5 * Math.sin(t * 0.0035 + i * 0.45);
+      const a = 0.03 + d * 0.11 * pulse;
+      lctx.fillStyle = 'rgba(155, 207, 111, ' + a.toFixed(3) + ')';
+      lctx.fillRect(x, padT, barWidth, plotH);
+    }
+
+    // Playhead at the incident
+    const phX = padL + INCIDENT_BUCKET * barW + barW / 2;
+    const phPulse = 0.55 + 0.45 * Math.sin(t * 0.003);
+
+    // vertical line
+    lctx.strokeStyle = 'rgba(236, 232, 222, ' + (0.32 + phPulse * 0.18).toFixed(3) + ')';
+    lctx.lineWidth = 1;
+    lctx.beginPath();
+    lctx.moveTo(phX, padT - 3);
+    lctx.lineTo(phX, baseline);
+    lctx.stroke();
+
+    // phosphor glow halo
+    const grad = lctx.createRadialGradient(phX, padT + 1, 0, phX, padT + 1, 10);
+    grad.addColorStop(0, 'rgba(155, 207, 111, ' + (0.35 * phPulse).toFixed(3) + ')');
+    grad.addColorStop(1, 'rgba(155, 207, 111, 0)');
+    lctx.fillStyle = grad;
+    lctx.beginPath();
+    lctx.arc(phX, padT + 1, 10, 0, Math.PI * 2);
+    lctx.fill();
+
+    // phosphor dot cap
+    lctx.fillStyle = 'rgba(155, 207, 111, ' + (0.55 + phPulse * 0.35).toFixed(3) + ')';
+    lctx.beginPath();
+    lctx.arc(phX, padT + 1, 2.4, 0, Math.PI * 2);
+    lctx.fill();
+
+    // Axis labels
+    lctx.font = '9px IBM Plex Mono, ui-monospace, monospace';
+    lctx.textAlign = 'left';
+    lctx.fillStyle = 'rgba(61, 58, 51, 0.95)';
+    lctx.fillText('14:23:00', padL, lh - 4);
+    lctx.textAlign = 'right';
+    lctx.fillText('14:23:40', lw - padR, lh - 4);
+
+    // Playhead time
+    lctx.textAlign = 'center';
+    lctx.fillStyle = 'rgba(155, 207, 111, ' + (0.55 + phPulse * 0.3).toFixed(3) + ')';
+    lctx.fillText('14:23:07.411', phX, lh - 4);
+
+    // Top-left density hint
+    lctx.textAlign = 'left';
+    lctx.fillStyle = 'rgba(61, 58, 51, 0.9)';
+    lctx.fillText('EVENTS / 0.5s BUCKET', padL, padT - 4);
+  }
+
+  function tickLog(t) {
+    renderLog(t);
+    requestAnimationFrame(tickLog);
+  }
+  requestAnimationFrame(tickLog);
+}
+
 // ═══════════════════════════════════════ WAITLIST
 
 function submitEmail(e) {
@@ -1636,6 +2374,268 @@ function submitEmail(e) {
     });
 
   return false;
+}
+
+// ═══════════════════════════════════════ LOG DIALOG
+
+const logDialog     = document.getElementById('logDialog');
+const logServiceEl  = document.getElementById('logService');
+const logEventsEl   = document.getElementById('logEvents');
+const logClusteredEl= document.getElementById('logClustered');
+const logList       = logDialog && logDialog.querySelector('.log-list');
+const logSearch     = logDialog && logDialog.querySelector('.log-toolbar .search input');
+const logSearchHint = logDialog && logDialog.querySelector('.log-toolbar .search .hint');
+const logEmpty      = document.getElementById('logEmpty');
+
+const logState = {
+  anomaly:   true,   // chip "Anomaly > 2σ"
+  heartbeat: true,   // chip "Heartbeat muted"
+  baseline:  false,  // chip "Baseline /1h"
+  trace:     false,  // chip "Trace follow"
+  search:    '',
+};
+
+function fmtEvents(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000)    return (n / 1000).toFixed(0) + 'k';
+  return String(n);
+}
+
+function hashStr(s) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return (h >>> 0);
+}
+
+function contextFor(row) {
+  const next = row.nextElementSibling;
+  return (next && next.classList && next.classList.contains('log-context')) ? next : null;
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function rebuildMsg(row, searchTerms) {
+  const msgEl = row.querySelector('.msg');
+  if (!msgEl) return;
+  const raw = row.getAttribute('data-raw-msg') || msgEl.textContent;
+  // Split into template (before first space + '{') and fields (the {...})
+  let template = raw, fields = '';
+  const braceIdx = raw.indexOf('{');
+  if (braceIdx > -1) {
+    template = raw.slice(0, braceIdx).trim();
+    fields = raw.slice(braceIdx).trim();
+  }
+
+  const highlight = (text) => {
+    if (!searchTerms || !searchTerms.length) return escapeHtml(text);
+    const escaped = escapeHtml(text);
+    // Build a single alternation regex, case-insensitive.
+    const pattern = searchTerms
+      .map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      .filter(Boolean)
+      .join('|');
+    if (!pattern) return escaped;
+    return escaped.replace(new RegExp(pattern, 'gi'), m => `<mark>${m}</mark>`);
+  };
+
+  msgEl.innerHTML =
+    highlight(template) +
+    (fields ? ` <span class="fields">${highlight(fields)}</span>` : '');
+}
+
+function recomputeRelated() {
+  if (!logList) return;
+  const rows = Array.from(logList.querySelectorAll('.log-row'));
+  const activeRows = rows.filter(r => r.querySelector('.act.related[data-on="true"]'));
+  const activeTokens = new Set();
+  activeRows.forEach(r => {
+    (r.getAttribute('data-tokens') || '')
+      .split(/\s+/).filter(Boolean).forEach(t => activeTokens.add(t));
+  });
+  rows.forEach(r => {
+    const isSource = activeRows.includes(r);
+    const tokens = (r.getAttribute('data-tokens') || '').split(/\s+/).filter(Boolean);
+    const hits = !isSource && tokens.some(t => activeTokens.has(t));
+    r.classList.toggle('related-source', isSource && activeTokens.size > 0);
+    r.classList.toggle('related-highlight', hits);
+  });
+}
+
+function applyFilters() {
+  if (!logList) return;
+  const { anomaly, heartbeat, baseline, trace, search } = logState;
+  document.body.classList.toggle('anomaly-on', anomaly);
+  document.body.classList.toggle('baseline-on', baseline);
+
+  const rows = Array.from(logList.querySelectorAll('.log-row'));
+  const contextMap = new Map();
+  rows.forEach(r => { const c = contextFor(r); if (c) contextMap.set(r, c); });
+
+  const terms = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  let visible = 0, matched = 0;
+
+  rows.forEach(row => {
+    const template = (row.getAttribute('data-template') || '').toLowerCase();
+    const tokens   = (row.getAttribute('data-tokens')   || '').toLowerCase();
+    const rawMsg   = (row.getAttribute('data-raw-msg')  || '').toLowerCase();
+    const haystack = `${template} ${tokens} ${rawMsg}`;
+
+    let show = true;
+
+    if (trace && row.getAttribute('data-trace') !== '1') show = false;
+
+    if (terms.length) {
+      const ok = terms.every(t => haystack.includes(t));
+      if (!ok) show = false;
+      else matched++;
+    } else if (heartbeat && row.classList.contains('muted-persist')) {
+      show = false;
+    }
+
+    row.classList.toggle('hidden', !show);
+    const ctx = contextMap.get(row);
+    if (ctx) ctx.classList.toggle('hidden', !show);
+
+    rebuildMsg(row, terms);
+
+    if (show) visible++;
+  });
+
+  // Reorder: anomaly-first (desc anomaly score) or chronological (desc ts).
+  const sorted = rows.slice().sort((a, b) => {
+    if (anomaly) {
+      return (+b.getAttribute('data-anomaly')) - (+a.getAttribute('data-anomaly'));
+    }
+    return (+b.getAttribute('data-ts')) - (+a.getAttribute('data-ts'));
+  });
+  sorted.forEach(row => {
+    logList.appendChild(row);
+    const ctx = contextMap.get(row);
+    if (ctx) logList.appendChild(ctx);
+  });
+  if (logEmpty) {
+    logList.appendChild(logEmpty);
+    logEmpty.hidden = visible > 0;
+  }
+
+  if (logSearchHint) {
+    logSearchHint.textContent = terms.length
+      ? `embeddings · ${matched} match${matched === 1 ? '' : 'es'}`
+      : 'embeddings · ready';
+  }
+}
+
+function openLogDialog(node) {
+  if (!logDialog) return;
+  if (logServiceEl && node && node.name) logServiceEl.textContent = node.name;
+  if (logEventsEl && node) {
+    const h = hashStr(node.name);
+    const events = 0.4e6 + (h % 2200) * 1000;
+    logEventsEl.textContent = fmtEvents(events);
+  }
+  if (logClusteredEl && node) {
+    const h = hashStr(node.name + '·c');
+    logClusteredEl.textContent = String(16 + (h % 18));
+  }
+  logDialog.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  requestAnimationFrame(() => resizeLogDensity());
+}
+
+function closeLogDialog() {
+  if (!logDialog) return;
+  logDialog.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+if (logDialog) {
+  logDialog.addEventListener('click', e => {
+    if (e.target && e.target.hasAttribute && e.target.hasAttribute('data-close')) {
+      closeLogDialog();
+    }
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && logDialog.classList.contains('open')) closeLogDialog();
+  });
+
+  // Chip toggles
+  logDialog.querySelectorAll('.log-toolbar .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const key = chip.getAttribute('data-key');
+      if (!key || !(key in logState)) return;
+      logState[key] = !logState[key];
+      chip.classList.toggle('on', logState[key]);
+      applyFilters();
+    });
+  });
+
+  // Per-row action buttons.
+  logDialog.querySelectorAll('.log-row .act').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const row = btn.closest('.log-row');
+      if (!row) return;
+      const on = btn.getAttribute('data-on') === 'true';
+      const next = !on;
+      btn.setAttribute('data-on', String(next));
+
+      if (btn.classList.contains('mute')) {
+        row.classList.toggle('muted-persist', next);
+        row.classList.toggle('faded', next);
+        applyFilters();
+      } else if (btn.classList.contains('pin')) {
+        row.classList.toggle('pinned', next);
+      } else if (btn.classList.contains('related')) {
+        recomputeRelated();
+      }
+    });
+  });
+
+  // Search input.
+  if (logSearch) {
+    logSearch.addEventListener('input', () => {
+      logState.search = logSearch.value;
+      applyFilters();
+    });
+  }
+
+  // Initial state.
+  logState.search = logSearch ? logSearch.value : '';
+  applyFilters();
+  recomputeRelated();
+}
+
+// ——— Hit-testing on the topology canvas ————————————————————
+
+function hitTestNode(ev) {
+  if (!topoCanvas || !nodeScreenPositions.length) return null;
+  const rect = topoCanvas.getBoundingClientRect();
+  const x = ev.clientX - rect.left;
+  const y = ev.clientY - rect.top;
+  let best = null, bestD = 14 * 14;  // generous 14px hit radius
+  for (let i = 0; i < nodeScreenPositions.length; i++) {
+    const p = nodeScreenPositions[i];
+    const dx = p.sx - x, dy = p.sy - y;
+    const d = dx * dx + dy * dy;
+    if (d < bestD) { bestD = d; best = p; }
+  }
+  return best;
+}
+
+if (topoCanvas) {
+  topoCanvas.addEventListener('mousemove', ev => {
+    const hit = hitTestNode(ev);
+    topoCanvas.classList.toggle('node-hover', !!hit);
+  });
+  topoCanvas.addEventListener('mouseleave', () => {
+    topoCanvas.classList.remove('node-hover');
+  });
+  topoCanvas.addEventListener('click', ev => {
+    const hit = hitTestNode(ev);
+    if (hit) openLogDialog(hit.node);
+  });
 }
 </script>
 
