@@ -1,0 +1,23 @@
+{
+  "name": "Spoonfish",
+  "short_name": "Spoonfish",
+  "description": "An instrument for observability.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#0a0a0c",
+  "theme_color": "#0a0a0c",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
