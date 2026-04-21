@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Deep ink-green background; reads cleanly on Discord's dark UI and still pops on light -->
+  <rect width="512" height="512" fill="#0f2a14"/>
+
+  <!-- Subtle inner glow to lift the fish off the flat background -->
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a3a1f" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#0f2a14" stop-opacity="1"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#glow)"/>
+
+  <!-- Fish silhouette: original 32-viewBox path, scaled ×12 with 64px padding each side -->
+  <!-- Result: fish occupies ~75% of canvas, fits inside Discord's circular crop with margin -->
+  <g transform="translate(64, 64) scale(12)">
+    <!-- Body + forked tail + eye (combined path from original) -->
+    <path fill="#9bcf6f" fill-rule="evenodd"
+          d="M30 16C30 9 26 4 19 4C13 4 8 7 6 12L1 2L5 16L1 30L6 20C8 25 13 28 19 28C26 28 30 23 30 16ZM22 13a1.7 1.7 0 1 0 3.4 0a1.7 1.7 0 1 0-3.4 0Z"/>
+
+    <!-- Gill curve: thicker stroke than favicon so it survives downscaling to 32px Discord sidebar -->
+    <path fill="none" stroke="#5e8a44" stroke-width="1.6" stroke-linecap="round"
+          d="M15.5 8C13.5 11 13.5 21 15.5 24"/>
+  </g>
+</svg>

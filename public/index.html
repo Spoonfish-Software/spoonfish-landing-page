@@ -857,6 +857,13 @@
     color: var(--bg);
   }
 </style>
+
+<script>
+  !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+  if (window.__PH_KEY__) {
+    posthog.init(window.__PH_KEY__, { api_host: window.__PH_HOST__ || 'https://us.i.posthog.com', defaults: '2026-01-30' });
+  }
+</script>
 </head>
 <body>
 
@@ -2351,6 +2358,8 @@ function submitEmail(e) {
   note.textContent = '';
   note.className = 'note';
 
+  posthog.capture('waitlist_submitted');
+
   fetch('/api/waitlist', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -2359,18 +2368,22 @@ function submitEmail(e) {
     .then(r => r.json().then(j => ({ ok: r.ok, j })))
     .then(({ ok, j }) => {
       if (ok) {
+        posthog.identify(email, { email: email });
+        posthog.capture('waitlist_signup_succeeded');
         btn.textContent = 'On the list';
         note.textContent = "You'll hear from us when access opens.";
         note.className = 'note ok';
         input.disabled = true;
       } else {
+        posthog.capture('waitlist_signup_failed', { error: (j && j.error) || 'unknown' });
         btn.disabled = false;
         btn.textContent = 'Request access';
         note.textContent = (j && j.error) || 'Something went wrong. Try again.';
         note.className = 'note error';
       }
     })
-    .catch(() => {
+    .catch((err) => {
+      posthog.captureException(err, { event: 'waitlist_signup_failed', error: 'network_error' });
       btn.disabled = false;
       btn.textContent = 'Request access';
       note.textContent = 'Network error. Try again.';
@@ -2546,12 +2559,14 @@ function openLogDialog(node) {
   logDialog.classList.add('open');
   document.body.style.overflow = 'hidden';
   requestAnimationFrame(() => resizeLogDensity());
+  posthog.capture('log_dialog_opened', { service: node && node.name });
 }
 
 function closeLogDialog() {
   if (!logDialog) return;
   logDialog.classList.remove('open');
   document.body.style.overflow = '';
+  posthog.capture('log_dialog_closed');
 }
 
 if (logDialog) {
@@ -2572,6 +2587,7 @@ if (logDialog) {
       logState[key] = !logState[key];
       chip.classList.toggle('on', logState[key]);
       applyFilters();
+      posthog.capture('log_filter_toggled', { filter: key, enabled: logState[key] });
     });
   });
 
@@ -2591,6 +2607,7 @@ if (logDialog) {
         applyFilters();
       } else if (btn.classList.contains('pin')) {
         row.classList.toggle('pinned', next);
+        posthog.capture('log_row_pinned', { pinned: next });
       } else if (btn.classList.contains('related')) {
         recomputeRelated();
       }
@@ -2598,10 +2615,17 @@ if (logDialog) {
   });
 
   // Search input.
+  let _phSearchDebounce;
   if (logSearch) {
     logSearch.addEventListener('input', () => {
       logState.search = logSearch.value;
       applyFilters();
+      clearTimeout(_phSearchDebounce);
+      if (logSearch.value.trim()) {
+        _phSearchDebounce = setTimeout(() => {
+          posthog.capture('log_search_used', { query_length: logSearch.value.trim().length });
+        }, 1000);
+      }
     });
   }
 
@@ -2638,9 +2662,53 @@ if (topoCanvas) {
   });
   topoCanvas.addEventListener('click', ev => {
     const hit = hitTestNode(ev);
-    if (hit) openLogDialog(hit.node);
+    if (hit) {
+      posthog.capture('topology_node_clicked', { service: hit.node.name });
+      openLogDialog(hit.node);
+    }
   });
 }
+
+// ═══════════════════════════════════════ WAITLIST FUNNEL ENTRY
+
+(function () {
+  const waitlistSection = document.getElementById('waitlist');
+  if (!waitlistSection || !window.IntersectionObserver) return;
+  let fired = false;
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !fired) {
+        fired = true;
+        posthog.capture('waitlist_section_viewed');
+        obs.disconnect();
+      }
+    });
+  }, { threshold: 0.5 });
+  obs.observe(waitlistSection);
+}());
+
+// ═══════════════════════════════════════ EMAIL INPUT FOCUS
+
+(function () {
+  const emailInput = document.getElementById('email');
+  if (!emailInput) return;
+  let fired = false;
+  emailInput.addEventListener('focus', function () {
+    if (fired) return;
+    fired = true;
+    posthog.capture('email_input_focused');
+  });
+}());
+
+// ═══════════════════════════════════════ GLOBAL ERROR TRACKING
+
+window.addEventListener('unhandledrejection', function (event) {
+  posthog.captureException(event.reason);
+});
+
+window.addEventListener('error', function (event) {
+  posthog.captureException(event.error || new Error(event.message));
+});
 </script>
 
 </body>
