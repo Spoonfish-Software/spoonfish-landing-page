@@ -17,7 +17,7 @@ export default {
       const configScript =
         `<script>window.__PH_KEY__=${JSON.stringify(env.PUBLIC_POSTHOG_KEY)};` +
         `window.__PH_HOST__=${JSON.stringify(env.PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com")};</script>`;
-      const modified = text.replace("</head>", configScript + "\n</head>");
+      const modified = text.replace("<head>", "<head>\n" + configScript);
       const headers = new Headers(response.headers);
       headers.delete("content-length");
       return new Response(modified, { status: response.status, headers });
