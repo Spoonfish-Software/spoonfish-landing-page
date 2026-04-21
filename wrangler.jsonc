@@ -7,7 +7,19 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
-    "not_found_handling": "404-page"
+    "not_found_handling": "404-page",
+    "run_worker_first": true
+  },
+  "routes": [
+    {
+      "pattern": "spoonfish.dev",
+      "zone_name": "spoonfish.dev",
+      "custom_domain": true
+    }
+  ],
+  "vars": {
+    "PUBLIC_POSTHOG_HOST": "https://us.i.posthog.com",
+    "PUBLIC_POSTHOG_KEY": "phc_qeiD9GF2QAnn7JBfzX7ShKidyzNaodQzgyEVtwfZLojw"
   },
   "kv_namespaces": [
     {
