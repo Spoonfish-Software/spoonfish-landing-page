@@ -18,7 +18,7 @@
     }
   ],
   "vars": {
-    "PUBLIC_POSTHOG_HOST": "https://us.i.posthog.com",
+    "PUBLIC_POSTHOG_HOST": "/ingest",
     "PUBLIC_POSTHOG_KEY": "phc_qeiD9GF2QAnn7JBfzX7ShKidyzNaodQzgyEVtwfZLojw"
   },
   "kv_namespaces": [
