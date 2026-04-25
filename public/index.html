@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Spoonfish — an instrument for observability</title>
-<meta name="description" content="Every signal your system emits — and every one that touches it — synchronized to a single scrubbable timeline. An instrument, not a dashboard.">
+<title>Spoonfish — see what changed, what broke, and why</title>
+<meta name="description" content="Modern software runs across hundreds of moving parts. When something breaks, finding the cause means checking six tools and piecing together a timeline from memory. Spoonfish puts everything on one screen.">
 <meta property="og:title" content="Spoonfish">
-<meta property="og:description" content="An instrument for observability. One time axis, every signal.">
+<meta property="og:description" content="One screen. Every change, every consequence, every connection — in order.">
 <meta name="theme-color" content="#0a0a0c">
 
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -117,7 +117,7 @@
     font: 400 clamp(40px, 7vw, 96px)/1.0 var(--serif);
     letter-spacing: -0.025em;
     color: var(--ink);
-    max-width: 16ch;
+    max-width: 18ch;
     margin-bottom: 48px;
   }
 
@@ -228,7 +228,7 @@
     padding-top: 8px;
   }
 
-  /* ═══════════════════════════════════════ MANIFESTO */
+  /* ═══════════════════════════════════════ PROSE */
 
   .two-col {
     display: grid;
@@ -397,7 +397,7 @@
     letter-spacing: 0.01em;
   }
   .log-context::before {
-    content: "└";
+    content: "\2514";
     color: var(--ink-faint);
     font-family: var(--mono);
     font-style: normal;
@@ -611,7 +611,7 @@
 
   .log-row.hot .actions { opacity: 1; pointer-events: auto; }
 
-  /* Pin marker — hidden unless row is pinned */
+  /* Pin marker */
   .log-row .pin-marker {
     position: absolute;
     left: 5px;
@@ -626,7 +626,7 @@
   .log-row.pinned .pin-marker { opacity: 1; }
   .log-row.pinned { background: rgba(155, 207, 111, 0.04); }
 
-  /* Baseline delta badge — shown when baseline chip is on */
+  /* Baseline delta badge */
   .log-row .baseline-badge {
     display: none;
     font: 500 9px/1 var(--mono);
@@ -642,12 +642,12 @@
   body.baseline-on .log-row { grid-template-columns: 100px 50px 46px auto 1fr; }
 
   .log-row[data-baseline="new"]  .baseline-badge,
-  .log-row[data-baseline="+∞"]  .baseline-badge { color: var(--phosphor); border-color: rgba(155, 207, 111, 0.4); }
+  .log-row[data-baseline="+\221E"]  .baseline-badge { color: var(--phosphor); border-color: rgba(155, 207, 111, 0.4); }
   .log-row[data-baseline^="+"]   .baseline-badge { color: var(--amber); border-color: rgba(224, 160, 96, 0.35); }
-  .log-row[data-baseline^="−"]   .baseline-badge,
+  .log-row[data-baseline^="\2212"]   .baseline-badge,
   .log-row[data-baseline="0%"]   .baseline-badge { color: var(--ink-faint); }
 
-  /* Related-highlight — when R is pressed, sibling rows that share a token glow amber */
+  /* Related-highlight */
   .log-row.related-highlight { background: rgba(224, 160, 96, 0.05); }
   .log-row.related-highlight::before {
     content: "";
@@ -659,11 +659,9 @@
   }
   .log-row.related-source { background: rgba(224, 160, 96, 0.08); }
 
-  /* Hidden rows — filters collapse them entirely */
   .log-row.hidden,
   .log-context.hidden { display: none !important; }
 
-  /* NOVEL badge — only visible when anomaly chip is on */
   body.anomaly-on .log-row.novel::after {
     content: "NEW";
     position: absolute;
@@ -675,10 +673,8 @@
     opacity: 0.85;
   }
   body.anomaly-on .log-row:hover.novel::after { opacity: 0; }
-  /* Hide NEW when baseline is on (baseline-badge shows the same info, more precisely) */
   body.anomaly-on.baseline-on .log-row.novel::after { display: none; }
 
-  /* Chronological mode — suppress anomaly emphasis */
   body:not(.anomaly-on) .log-row.hot {
     background: transparent;
     animation: none;
@@ -687,7 +683,6 @@
   body:not(.anomaly-on) .log-row.faded .msg { color: var(--ink); }
   body:not(.anomaly-on) .log-row.faded .msg .fields { color: var(--ink-dim); }
 
-  /* Search highlights */
   .log-row .msg mark {
     background: rgba(224, 160, 96, 0.18);
     color: var(--ink);
@@ -698,7 +693,6 @@
     color: var(--ink);
   }
 
-  /* Empty-state row */
   .log-empty {
     padding: 40px 22px;
     text-align: center;
@@ -871,19 +865,21 @@
 
 <header>
   <a href="#" class="mark">Spoonfish</a>
-  <span class="meta">Private beta · <em>Q3 2026</em></span>
+  <span class="meta">Private beta &middot; <em>Q3 2026</em></span>
 </header>
 
-<section class="hero">
-  <div class="eyebrow">001 — An instrument for observability</div>
+<!-- ═══════════════════════════════════════ HERO -->
 
-  <h1 class="title">The system, on <em>one</em> time axis.</h1>
+<section class="hero">
+  <div class="eyebrow">See what changed. See what broke. See why.</div>
+
+  <h1 class="title">Find the problem, <em>not</em> the tool.</h1>
 
   <p class="lede">
-    <span>Every signal your system emits, and every one that touches it.</span>
-    Synchronized to a single scrubbable timeline.
-    Drag the playhead. Watch it happen. Mute the noise. Solo the suspect. Drill into the moment.
-    Let it play past now.
+    <span>Modern software is made of many parts running across many machines, all working together.</span>
+    When something goes wrong, the cause could be in any of them. Today, you check a dozen
+    different screens and piece together the timeline in your head. Spoonfish puts it all on one screen &mdash;
+    every change, every consequence, every connection &mdash; in order.
   </p>
 
   <div class="scope-wrap">
@@ -899,60 +895,178 @@
       <canvas id="scope"></canvas>
     </div>
     <div class="caption">
-      <span>Figure 001 — synchronized tracks, scrubbable transport</span>
-      <span>Rendered live · 60fps</span>
+      <span>Six services, synchronized &mdash; errors, latency, code releases, all on one timeline</span>
+      <span>Rendered live &middot; 60fps</span>
     </div>
   </div>
 </section>
 
 <main>
 
+  <!-- ═══════════════════════════════════════ THE REALITY -->
+
   <section>
     <div class="two-col">
-      <div class="section-label">On design</div>
+      <div class="section-label">The reality</div>
       <div class="prose">
         <p>
-          Every observability tool ships as a database with charts bolted on. You write a query,
-          wait, read a chart, write another query. During an incident, at 3 a.m., under pressure —
-          this is the wrong interface.
+          Something breaks at 3 a.m. You open a metrics dashboard
+          <span style="color:var(--ink-faint)">(Grafana, Datadog, CloudWatch)</span>. Then a log viewer
+          <span style="color:var(--ink-faint)">(Kibana, Splunk)</span>. Then a request tracer
+          <span style="color:var(--ink-faint)">(Jaeger, Tempo)</span>. Then the cloud console to check if
+          anyone pushed a code release or changed a setting. Then a chat thread to see if
+          someone else noticed. You hold six windows of context in your head and try to
+          reconstruct <em>what happened, in what order</em>.
         </p>
         <p>
-          Engineers don't reason about systems as queries. They reason about them <em>temporally</em> —
-          what happened, what came before, what was doing what at the moment it broke. And what
-          broke is rarely only in the telemetry. A commit landed an hour ago. A queue drained.
-          A rule in a security group flipped. Every cause leaves a mark somewhere. The tool should
-          gather all of them onto one axis.
-        </p>
-        <p>
-          Spoonfish does. A playhead. Tracks. Waveforms. Spans. A topology that behaves like a
-          map. An axis wide enough for the whole system, not just its telemetry.
-          <strong>No query bar. No tab switching. No correlation-by-screenshot.</strong>
+          Typical time to find the cause: 30 to 90 minutes. Not because the fix is hard &mdash;
+          because the evidence is scattered across tools that don't talk to each other.
+          <strong>You are the correlation engine.</strong> You're doing the job that software
+          should do for you.
         </p>
       </div>
     </div>
   </section>
 
+  <!-- ═══════════════════════════════════════ WHAT SPOONFISH IS -->
+
   <section>
     <div class="two-col">
-      <div class="section-label">On cartography</div>
+      <div class="section-label">What Spoonfish is</div>
       <div class="prose">
         <p>
-          A service graph drawn by a force-directed algorithm rearranges itself every time you
-          open it. That's not a map — it's <em>weather</em>. Spoonfish renders topology the way
-          cartographers do: stable geography, semantic zoom, a shape you can learn.
+          One screen that shows everything happening across your software &mdash; every part,
+          every connection between them, and every change anyone made &mdash; synchronized to
+          the same clock. When something breaks, the code release that preceded it, the
+          setting that changed, and the parts that were affected are all <em>already
+          connected</em>. You don't reconstruct the timeline. You look at it.
         </p>
         <p>
-          Zoom out for the shape of the estate. Zoom in until you can read the service names
-          and watch a single request thread its way across them — one continuous route, picking
-          up color as health or latency change along the hops. Pins where it mattered. The
-          map doesn't reshuffle. It resolves.
+          And when nothing is broken, the same view shows you the shape of your entire
+          system &mdash; what connects to what, where things are healthy, where they aren't.
+          A new engineer can explore it on day one. A senior engineer uses it to plan changes.
+          <strong>One view. Debug when it's broken. Understand when it's not.</strong>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════ WHEN THINGS BREAK -->
+
+  <section>
+    <div class="two-col">
+      <div class="section-label">When things break</div>
+      <div class="prose">
+        <p>
+          A timeline of everything that happened &mdash; errors and slowdowns alongside the
+          changes that caused them. A code release landed 47 milliseconds before the first
+          failure. A database setting changed two seconds earlier. A neighboring part of the
+          system started failing at the same moment. Cause and effect, <em>visible</em>.
         </p>
         <p>
-          Click any service. A dialog drops over the map with its logs for the same time window
-          — <em>anomaly-ranked</em>, templates clustered, heartbeat faded. The line that matters
-          comes with the neighbors that matter: the deploy that preceded it, the topology change
-          that coincided with it, the sibling service whose error rate spiked alongside.
-          <strong>Logs as a node in an event graph, not a stream in a silo.</strong>
+          Click any part of the system and see its detailed records for that exact moment
+          &mdash; ranked by what's unusual, with the routine noise faded out. The record that
+          matters surfaces with the context that matters: <strong>what changed just before
+          it, and what else broke alongside it.</strong>
+        </p>
+      </div>
+    </div>
+
+    <div class="scope-wrap" style="margin-top: 72px;">
+      <div class="scope log-scope" style="height: auto;">
+        <div class="scope-chrome">
+          <span>Logs <span class="sep">/</span> api-gateway <span class="sep">&middot;</span> us-east-1</span>
+          <span>Events <span class="sep">/</span> 1.2M</span>
+          <span>Clustered <span class="sep">/</span> 23</span>
+          <span style="flex:1"></span>
+          <span class="tc">14:23:07.411 UTC</span>
+        </div>
+        <div class="log-list">
+          <div class="log-row row-error hot"
+               data-template="payment.charge.timeout"
+               data-ts="7411" data-anomaly="100" data-trace="1"
+               data-tokens="rds-primary deploy-v2.14.1 auth-service order_id payment checkout"
+               data-baseline="new" data-has-context="1"
+               data-raw-msg="payment.charge.timeout { order_id=ord_*, merchant_id=m_*, backend=rds-primary, attempt=5 }">
+            <span class="pin-marker">&#9670;</span>
+            <span class="ts">14:23:07.411</span>
+            <span class="sev sev-error">ERROR</span>
+            <span class="count">&times;1</span>
+            <span class="baseline-badge">NEW</span>
+            <span class="msg">payment.charge.timeout <span class="fields">{ order_id=ord_*, merchant_id=m_*, backend=rds-primary, attempt=5 }</span></span>
+          </div>
+          <div class="log-context" data-context-for="payment.charge.timeout">
+            <span>+47ms after <em>deploy v2.14.1</em> on api-gateway</span>
+            <span class="sep">&middot;</span>
+            <span>+2.3s after <em>security-group change</em> on rds-primary</span>
+            <span class="sep">&middot;</span>
+            <span>concurrent <em>5xx on auth-service</em></span>
+          </div>
+          <div class="log-row row-warn novel"
+               data-template="upstream.retry.exhausted"
+               data-ts="7402" data-anomaly="85" data-trace="1"
+               data-tokens="rds-primary retry backend"
+               data-baseline="+&infin;"
+               data-raw-msg="upstream.retry.exhausted { backend=rds-primary, attempts=5 }">
+            <span class="pin-marker">&#9670;</span>
+            <span class="ts">14:23:07.402</span>
+            <span class="sev sev-warn">WARN</span>
+            <span class="count">&times;3</span>
+            <span class="baseline-badge">+&infin;</span>
+            <span class="msg">upstream.retry.exhausted <span class="fields">{ backend=rds-primary, attempts=5 }</span></span>
+          </div>
+
+          <div class="log-row row-warn"
+               data-template="circuit.breaker.opened"
+               data-ts="6880" data-anomaly="75" data-trace="0"
+               data-tokens="pricing circuit breaker error_rate"
+               data-baseline="+420%"
+               data-raw-msg="circuit.breaker.opened { service=pricing, error_rate=64% }">
+            <span class="pin-marker">&#9670;</span>
+            <span class="ts">14:23:06.880</span>
+            <span class="sev sev-warn">WARN</span>
+            <span class="count">&times;12</span>
+            <span class="baseline-badge">+420%</span>
+            <span class="msg">circuit.breaker.opened <span class="fields">{ service=pricing, error_rate=64% }</span></span>
+          </div>
+
+          <div class="log-row row-info faded" style="opacity:0.3">
+            <span class="pin-marker">&#9670;</span>
+            <span class="ts">14:23:07.415</span>
+            <span class="sev sev-info">INFO</span>
+            <span class="count">&times;347</span>
+            <span class="baseline-badge"></span>
+            <span class="msg" style="color:var(--ink-dim)">request.served <span class="fields" style="color:var(--ink-faint)">{ route=/v2/checkout, p50=18ms, p99=42ms }</span></span>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <span>Errors surfaced with causal context &mdash; what changed before, what else broke alongside</span>
+        <span>Anomaly-ranked &middot; noise faded</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════ WHEN THINGS ARE FINE -->
+
+  <section>
+    <div class="two-col">
+      <div class="section-label">Every other day</div>
+      <div class="prose">
+        <p>
+          Your software is made of many parts, and those parts change &mdash; new ones are
+          added, old ones are removed, the connections between them shift. Documentation
+          about how it all fits together goes stale within weeks. A new engineer's first
+          question is always the same: <em>how does this thing work, and what connects
+          to what?</em>
+        </p>
+        <p>
+          Spoonfish builds a live, interactive picture of all those parts and their
+          connections &mdash; automatically, from real activity. You don't draw it. You don't
+          maintain it. It stays current because it's built from what's actually happening.
+          Zoom out and you see everything. Zoom in and you see detail on any individual
+          part. <strong>The layout stays stable, so after a few days you navigate it the
+          way you navigate a neighborhood &mdash; by memory, not by searching.</strong>
         </p>
       </div>
     </div>
@@ -963,37 +1077,25 @@
           <span>Topology <span class="sep">/</span> global</span>
           <span>Nodes <span class="sep">/</span> 2,847</span>
           <span>Edges <span class="sep">/</span> 9,104</span>
-          <span>Zoom <span class="sep">/</span> <span id="zoom">1.00</span>×</span>
+          <span>Zoom <span class="sep">/</span> <span id="zoom">1.00</span>&times;</span>
           <span style="flex:1"></span>
-          <span class="tc" id="coord">40.71° N · 74.01° W</span>
+          <span class="tc" id="coord">40.71&deg; N &middot; 74.01&deg; W</span>
         </div>
         <canvas id="topo"></canvas>
       </div>
       <div class="caption">
-        <span>Figure 002 — service cartography, semantic zoom, stable geography</span>
-        <span>Rendered live · 60fps</span>
+        <span>Every part and every connection &mdash; derived from real activity, always current</span>
+        <span>Semantic zoom &middot; <strong style="color:var(--ink-dim)">click any node</strong> to see its logs</span>
       </div>
     </div>
   </section>
 
+  <!-- ═══════════════════════════════════════ DETAILS -->
+
   <section>
     <div class="two-col">
-      <div class="section-label">Details</div>
+      <div class="section-label">How it's different</div>
       <dl class="specs">
-        <div>
-          <dt>
-            <svg class="spec-glyph" viewBox="0 0 64 20" aria-hidden="true">
-              <line x1="2" y1="10" x2="62" y2="10"/>
-              <line x1="28" y1="3" x2="28" y2="17"/>
-              <circle class="filled" cx="28" cy="10" r="2"/>
-            </svg>
-            Transport
-          </dt>
-          <dd>
-            Play, pause, scrub, zoom. Sub-millisecond seek across hours or weeks. The playhead
-            is the only cursor that matters; every track below it moves in lockstep.
-          </dd>
-        </div>
         <div>
           <dt>
             <svg class="spec-glyph" viewBox="0 0 64 20" aria-hidden="true">
@@ -1007,62 +1109,13 @@
               <line x1="44" y1="14" x2="44" y2="17"/>
               <line x1="54" y1="14" x2="54" y2="17"/>
             </svg>
-            Tracks
+            Nothing thrown away
           </dt>
           <dd>
-            Every moving part as a dedicated track — utilization waveforms, span timelines,
-            error pins, deploy markers, commit landings, topology deltas, kernel events.
-            Whatever your system can emit goes on the axis, next to everything else that moved
-            with it.
-          </dd>
-        </div>
-        <div>
-          <dt>
-            <svg class="spec-glyph" viewBox="0 0 64 20" aria-hidden="true">
-              <path d="M 6 17 Q 10 8, 22 7 T 44 8 Q 56 11, 60 17"/>
-              <path d="M 14 17 Q 20 13, 28 12 T 48 14"/>
-              <circle class="filled" cx="32" cy="10" r="1.6"/>
-            </svg>
-            Cartography
-          </dt>
-          <dd>
-            A topology built on the logic of a geographical map, not a force-directed graph.
-            Services sit where you left them. Zoom out for the shape of the whole system;
-            zoom in until individual routes, pins, and boundaries resolve. A map you can
-            learn, not a diagram that reshuffles.
-          </dd>
-        </div>
-        <div>
-          <dt>
-            <svg class="spec-glyph" viewBox="0 0 64 20" aria-hidden="true">
-              <path d="M 2 4 Q 8 2.5 14 4 Q 20 5.5 26 4 Q 32 2.5 38 4 Q 44 5.5 50 4 Q 56 2.5 62 4" stroke-opacity="0.32"/>
-              <polyline class="bold" points="2,10 8,7 14,12 20,8 26,11 32,7 38,12 44,8 50,11 56,7 62,10"/>
-              <path d="M 2 16 Q 14 16 27 16"/>
-              <path d="M 27 16 Q 32 14 37 14 L 60 14"/>
-              <path d="M 27 16 Q 32 18 37 18 L 60 18"/>
-            </svg>
-            Mute, Solo, Drill
-          </dt>
-          <dd>
-            Hide the healthy. Isolate the suspect. Expand a track into its children. Debug by
-            elimination, not by query — the same way you'd debug with headphones on.
-          </dd>
-        </div>
-        <div>
-          <dt>
-            <svg class="spec-glyph" viewBox="0 0 64 20" aria-hidden="true">
-              <line x1="2" y1="6" x2="62" y2="6" stroke-opacity="0.35"/>
-              <path d="M 2 14 Q 8 13.2 14 14 Q 20 14.6 26 14"/>
-              <line x1="30" y1="3" x2="30" y2="17"/>
-              <path class="dashed" d="M 30 14 Q 36 10 42 6 Q 48 2.5 54 6 Q 58 9 62 11.5"/>
-              <circle cx="42" cy="6" r="1.5" fill="none" stroke-opacity="0.6"/>
-            </svg>
-            Precognition
-          </dt>
-          <dd>
-            The recording doesn't stop at <code>now</code>. The same model that replays the last
-            hour extrapolates the next few seconds, so you see the spike forming before the
-            alert fires — a flight recorder that also looks ahead.
+            Most monitoring tools charge by volume, so you're forced to discard data to control
+            costs. When something breaks, the evidence you need is in the data you threw away.
+            Spoonfish keeps everything &mdash; no head-based sampling, no cardinality limits.
+            High-dimension data is a feature, not a billing line.
           </dd>
         </div>
         <div>
@@ -1078,28 +1131,65 @@
               <line x1="43" y1="7"  x2="43" y2="14"/>
               <line x1="48" y1="9"  x2="48" y2="14"/>
             </svg>
-            Full fidelity, your bucket
+            Your data, your storage
           </dt>
           <dd>
-            No sampling. No cardinality tax. High-cardinality dimensions are a feature, not a
-            billing line. Columnar <code>Parquet</code> over your <code>S3</code> or <code>R2</code>
-            bucket, queried in-process with <code>DataFusion</code>. Open format, always
-            exportable, never held hostage.
+            Your data is stored in open columnar format (<code>Parquet</code>) in cloud storage
+            you already own &mdash; <code>S3</code>, <code>R2</code>, or equivalent. Queried
+            in-process &mdash; no separate database to operate. It never leaves your account.
+            No vendor lock-in. Always exportable. Query it with any tool that reads Parquet.
+          </dd>
+        </div>
+        <div>
+          <dt>
+            <svg class="spec-glyph" viewBox="0 0 64 20" aria-hidden="true">
+              <line x1="2" y1="6" x2="62" y2="6" stroke-opacity="0.35"/>
+              <path d="M 2 14 Q 8 13.2 14 14 Q 20 14.6 26 14"/>
+              <line x1="30" y1="3" x2="30" y2="17"/>
+              <path class="dashed" d="M 30 14 Q 36 10 42 6 Q 48 2.5 54 6 Q 58 9 62 11.5"/>
+              <circle cx="42" cy="6" r="1.5" fill="none" stroke-opacity="0.6"/>
+            </svg>
+            Cause, not just symptom
+          </dt>
+          <dd>
+            Every request that flows through your software takes a specific path. Spoonfish
+            identifies the step in that path that actually determined the total delay &mdash;
+            not just which part errored, but which part <em>mattered</em>. And the timeline
+            shows what changed right before the problem started, so you see cause and effect
+            together.
+          </dd>
+        </div>
+        <div>
+          <dt>
+            <svg class="spec-glyph" viewBox="0 0 64 20" aria-hidden="true">
+              <line x1="2" y1="10" x2="62" y2="10"/>
+              <line x1="28" y1="3" x2="28" y2="17"/>
+              <circle class="filled" cx="28" cy="10" r="2"/>
+            </svg>
+            Connect in minutes
+          </dt>
+          <dd>
+            Spoonfish works with OpenTelemetry &mdash; the open standard most teams already
+            use for collecting data from their software. If you're already instrumented, it's
+            one environment variable:
+            <code style="display:block;margin-top:12px;padding:8px 12px;font-size:12px;letter-spacing:0.01em">OTEL_EXPORTER_OTLP_ENDPOINT=https://ingest.spoonfish.dev</code>
+            If you're not, standard libraries exist for every language.
           </dd>
         </div>
       </dl>
     </div>
   </section>
 
+  <!-- ═══════════════════════════════════════ ACCESS -->
+
   <section id="waitlist">
     <div class="two-col">
       <div class="section-label">Access</div>
       <div>
-        <h2>First cohort, <em>Q3 2026</em>.</h2>
+        <h2>Private beta, <em>Q3 2026</em>.</h2>
         <p class="sub-lede">
-          Private beta opens with a small group of design partners — teams who've given up on
-          correlating by screenshot and want the whole system on one axis. All stacks welcome;
-          mixed stacks preferred.
+          We're starting with a small group of teams who run software across many machines
+          and are tired of debugging by screenshot. All technology stacks welcome.
         </p>
 
         <form class="form" onsubmit="return submitEmail(event)">
@@ -1122,10 +1212,10 @@
 <div class="log-dialog" id="logDialog" role="dialog" aria-modal="true" aria-labelledby="logDialogTitle">
   <div class="scrim" data-close></div>
   <div class="panel">
-    <button class="log-close" type="button" aria-label="Close" data-close>×</button>
+    <button class="log-close" type="button" aria-label="Close" data-close>&times;</button>
 
     <div class="scope-chrome">
-      <span id="logDialogTitle">Logs <span class="sep">/</span> <span id="logService">api-gateway</span> <span class="sep">·</span> us-east-1</span>
+      <span id="logDialogTitle">Logs <span class="sep">/</span> <span id="logService">api-gateway</span> <span class="sep">&middot;</span> us-east-1</span>
       <span>Window <span class="sep">/</span> 40s</span>
       <span>Events <span class="sep">/</span> <span id="logEvents">1.2M</span></span>
       <span>Clustered <span class="sep">/</span> <span id="logClustered">23</span></span>
@@ -1141,12 +1231,12 @@
           <circle cx="5" cy="5" r="3.2"/>
           <line x1="7.5" y1="7.5" x2="10.5" y2="10.5" stroke-linecap="round"/>
         </svg>
-        <input type="text" placeholder="Semantic search — &ldquo;payment failures after deploy&rdquo;">
-        <span class="hint">embeddings · ready</span>
+        <input type="text" placeholder="Semantic search &mdash; &ldquo;payment failures after deploy&rdquo;">
+        <span class="hint">embeddings &middot; ready</span>
       </label>
       <div class="chips">
-        <span class="chip on" data-key="anomaly" title="Surface lines whose rate diverges from their own baseline"><span class="dot"></span>Anomaly &gt; 2σ</span>
-        <span class="chip on" data-key="heartbeat" title="Hide high-volume repeating templates"><span class="dot"></span>Heartbeat muted <span class="count">×4</span></span>
+        <span class="chip on" data-key="anomaly" title="Surface lines whose rate diverges from their own baseline"><span class="dot"></span>Anomaly &gt; 2&sigma;</span>
+        <span class="chip on" data-key="heartbeat" title="Hide high-volume repeating templates"><span class="dot"></span>Heartbeat muted <span class="count">&times;4</span></span>
         <span class="chip" data-key="baseline" title="Diff against the same window one hour ago"><span class="dot"></span>Baseline /1h</span>
         <span class="chip" data-key="trace" title="Show only lines on the active trace path"><span class="dot"></span>Trace follow</span>
       </div>
@@ -1160,10 +1250,10 @@
            data-tokens="rds-primary deploy-v2.14.1 auth-service order_id payment checkout"
            data-baseline="new" data-has-context="1"
            data-raw-msg="payment.charge.timeout { order_id=ord_*, merchant_id=m_*, backend=rds-primary, attempt=5 }">
-        <span class="pin-marker">◆</span>
+        <span class="pin-marker">&#9670;</span>
         <span class="ts">14:23:07.411</span>
         <span class="sev sev-error">ERROR</span>
-        <span class="count">×1</span>
+        <span class="count">&times;1</span>
         <span class="baseline-badge">NEW</span>
         <span class="msg">payment.charge.timeout <span class="fields">{ order_id=ord_*, merchant_id=m_*, backend=rds-primary, attempt=5 }</span></span>
         <span class="actions">
@@ -1174,9 +1264,9 @@
       </div>
       <div class="log-context" data-context-for="payment.charge.timeout">
         <span>+47ms after <em>deploy v2.14.1</em> on api-gateway</span>
-        <span class="sep">·</span>
+        <span class="sep">&middot;</span>
         <span>+2.3s after <em>security-group change</em> on rds-primary</span>
-        <span class="sep">·</span>
+        <span class="sep">&middot;</span>
         <span>concurrent <em>5xx on auth-service</em></span>
       </div>
 
@@ -1184,13 +1274,13 @@
            data-template="upstream.retry.exhausted"
            data-ts="7402" data-anomaly="85" data-trace="1"
            data-tokens="rds-primary retry backend"
-           data-baseline="+∞"
+           data-baseline="+&infin;"
            data-raw-msg="upstream.retry.exhausted { backend=rds-primary, attempts=5 }">
-        <span class="pin-marker">◆</span>
+        <span class="pin-marker">&#9670;</span>
         <span class="ts">14:23:07.402</span>
         <span class="sev sev-warn">WARN</span>
-        <span class="count">×3</span>
-        <span class="baseline-badge">+∞</span>
+        <span class="count">&times;3</span>
+        <span class="baseline-badge">+&infin;</span>
         <span class="msg">upstream.retry.exhausted <span class="fields">{ backend=rds-primary, attempts=5 }</span></span>
         <span class="actions">
           <button class="act mute"   type="button" title="Mute this template">M</button>
@@ -1205,10 +1295,10 @@
            data-tokens="pricing circuit breaker error_rate"
            data-baseline="+420%"
            data-raw-msg="circuit.breaker.opened { service=pricing, error_rate=64% }">
-        <span class="pin-marker">◆</span>
+        <span class="pin-marker">&#9670;</span>
         <span class="ts">14:23:06.880</span>
         <span class="sev sev-warn">WARN</span>
-        <span class="count">×12</span>
+        <span class="count">&times;12</span>
         <span class="baseline-badge">+420%</span>
         <span class="msg">circuit.breaker.opened <span class="fields">{ service=pricing, error_rate=64% }</span></span>
         <span class="actions">
@@ -1224,10 +1314,10 @@
            data-tokens="consul config hotreload"
            data-baseline="+12%"
            data-raw-msg="config.hotreload.applied { source=consul, keys=3 }">
-        <span class="pin-marker">◆</span>
+        <span class="pin-marker">&#9670;</span>
         <span class="ts">14:23:06.712</span>
         <span class="sev sev-info">INFO</span>
-        <span class="count">×2</span>
+        <span class="count">&times;2</span>
         <span class="baseline-badge">+12%</span>
         <span class="msg">config.hotreload.applied <span class="fields">{ source=consul, keys=3 }</span></span>
         <span class="actions">
@@ -1241,16 +1331,16 @@
            data-template="request.served"
            data-ts="7415" data-anomaly="10" data-trace="1"
            data-tokens="checkout payment /v2/checkout route"
-           data-baseline="−8%"
+           data-baseline="&minus;8%"
            data-raw-msg="request.served { route=/v2/checkout, p50=18ms, p99=42ms }">
-        <span class="pin-marker">◆</span>
+        <span class="pin-marker">&#9670;</span>
         <span class="ts">14:23:07.415</span>
         <span class="sev sev-info">INFO</span>
-        <span class="count">×347</span>
-        <span class="baseline-badge">−8%</span>
+        <span class="count">&times;347</span>
+        <span class="baseline-badge">&minus;8%</span>
         <span class="msg">request.served <span class="fields">{ route=/v2/checkout, p50=18ms, p99=42ms }</span></span>
         <span class="actions">
-          <button class="act mute"   type="button" title="Muted · click to unmute" data-on="true">M</button>
+          <button class="act mute"   type="button" title="Muted &middot; click to unmute" data-on="true">M</button>
         </span>
       </div>
 
@@ -1258,16 +1348,16 @@
            data-template="cache.hit"
            data-ts="7412" data-anomaly="5" data-trace="0"
            data-tokens="redis-edge cache sessions"
-           data-baseline="−2%"
+           data-baseline="&minus;2%"
            data-raw-msg="cache.hit { store=redis-edge, keyspace=sessions }">
-        <span class="pin-marker">◆</span>
+        <span class="pin-marker">&#9670;</span>
         <span class="ts">14:23:07.412</span>
         <span class="sev sev-info">INFO</span>
-        <span class="count">×221</span>
-        <span class="baseline-badge">−2%</span>
+        <span class="count">&times;221</span>
+        <span class="baseline-badge">&minus;2%</span>
         <span class="msg">cache.hit <span class="fields">{ store=redis-edge, keyspace=sessions }</span></span>
         <span class="actions">
-          <button class="act mute"   type="button" title="Muted · click to unmute" data-on="true">M</button>
+          <button class="act mute"   type="button" title="Muted &middot; click to unmute" data-on="true">M</button>
         </span>
       </div>
 
@@ -1275,16 +1365,16 @@
            data-template="pool.checkout.ok"
            data-ts="7407" data-anomaly="3" data-trace="0"
            data-tokens="pg-primary pool"
-           data-baseline="−4%"
+           data-baseline="&minus;4%"
            data-raw-msg="pool.checkout.ok { pool=pg-primary, wait=0.2ms }">
-        <span class="pin-marker">◆</span>
+        <span class="pin-marker">&#9670;</span>
         <span class="ts">14:23:07.407</span>
         <span class="sev sev-debug">DEBUG</span>
-        <span class="count">×89</span>
-        <span class="baseline-badge">−4%</span>
+        <span class="count">&times;89</span>
+        <span class="baseline-badge">&minus;4%</span>
         <span class="msg">pool.checkout.ok <span class="fields">{ pool=pg-primary, wait=0.2ms }</span></span>
         <span class="actions">
-          <button class="act mute"   type="button" title="Muted · click to unmute" data-on="true">M</button>
+          <button class="act mute"   type="button" title="Muted &middot; click to unmute" data-on="true">M</button>
         </span>
       </div>
 
@@ -1294,14 +1384,14 @@
            data-tokens="heartbeat"
            data-baseline="0%"
            data-raw-msg="heartbeat.tick { }">
-        <span class="pin-marker">◆</span>
+        <span class="pin-marker">&#9670;</span>
         <span class="ts">14:23:07.400</span>
         <span class="sev sev-debug">DEBUG</span>
-        <span class="count">×54</span>
+        <span class="count">&times;54</span>
         <span class="baseline-badge">0%</span>
         <span class="msg">heartbeat.tick <span class="fields">{ }</span></span>
         <span class="actions">
-          <button class="act mute"   type="button" title="Muted · click to unmute" data-on="true">M</button>
+          <button class="act mute"   type="button" title="Muted &middot; click to unmute" data-on="true">M</button>
         </span>
       </div>
 
@@ -1319,7 +1409,7 @@
     </svg>
     <span>MMXXVI</span>
   </span>
-  <span class="colophon">An instrument, not a dashboard.</span>
+  <span class="colophon">Cause and effect, on one screen.</span>
   <a href="/privacy">Privacy</a>
   <a href="#" class="termly-display-preferences">Consent Preferences</a>
 </footer>
@@ -1360,7 +1450,6 @@ function smooth(x, seed) {
   return a * (1 - t) + b * t;
 }
 function fbm(x, seed) {
-  // 3-octave fractal brownian motion for more natural curves
   return smooth(x, seed) * 0.6
        + smooth(x * 2.1, seed + 0.3) * 0.3
        + smooth(x * 4.3, seed + 0.7) * 0.1;
@@ -1379,10 +1468,8 @@ let offsetX = 0;
 const startTime = performance.now();
 
 function drawChromePad(labelW, chromeH, bodyH) {
-  // left label column background (opaque)
   ctx.fillStyle = '#0f0f12';
   ctx.fillRect(0, chromeH, labelW, bodyH);
-  // divider
   ctx.strokeStyle = '#1c1b18';
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -1401,8 +1488,6 @@ function drawGrid(w, h, chromeH, trackH, labelW) {
     ctx.lineTo(w, y);
     ctx.stroke();
   }
-
-  // vertical time grid — scrolls with offset
   ctx.strokeStyle = 'rgba(28, 27, 24, 0.7)';
   const spacing = 140;
   const shift = offsetX % spacing;
@@ -1419,17 +1504,12 @@ function drawLabels(chromeH, trackH, labelW) {
   ctx.beginPath();
   ctx.rect(0, chromeH, labelW, trackH * tracks.length);
   ctx.clip();
-
   ctx.font = '500 10px "IBM Plex Mono", monospace';
   for (let i = 0; i < tracks.length; i++) {
     const ty = chromeH + i * trackH;
     const cy = ty + trackH / 2;
-
-    // name
     ctx.fillStyle = '#ece8de';
     ctx.fillText(tracks[i].label, 20, cy - 2);
-
-    // subtitle
     ctx.fillStyle = '#3d3a33';
     ctx.fillText(tracks[i].type === 'wave' ? 'util %' : 'spans', 20, cy + 12);
   }
@@ -1441,7 +1521,6 @@ function drawWave(track, ty, trackH, labelW, w, time) {
   const range = trackH * 0.68;
   const mid = ty + trackH / 2;
   const seed = track.seed;
-
   const points = [];
   for (let x = labelW; x <= w; x += step) {
     const t = (x + offsetX) / 55 + time * 0.15;
@@ -1449,8 +1528,6 @@ function drawWave(track, ty, trackH, labelW, w, time) {
     const yp = mid - (n - 0.5) * range;
     points.push([x, yp]);
   }
-
-  // fill
   ctx.beginPath();
   ctx.moveTo(points[0][0], ty + trackH);
   for (const [px, py] of points) ctx.lineTo(px, py);
@@ -1458,8 +1535,6 @@ function drawWave(track, ty, trackH, labelW, w, time) {
   ctx.closePath();
   ctx.fillStyle = 'rgba(216, 211, 199, 0.04)';
   ctx.fill();
-
-  // stroke
   ctx.beginPath();
   ctx.moveTo(points[0][0], points[0][1]);
   for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
@@ -1475,17 +1550,14 @@ function drawSpans(track, ty, trackH, labelW, w) {
   const pxOffset = offsetX % cellW;
   const count = Math.ceil((w - labelW) / cellW) + 4;
   const baseIdx = Math.floor(offsetX / cellW);
-
   for (let i = -2; i < count; i++) {
     const idx = baseIdx + i;
     const skip = hash(idx, track.seed + 5);
     if (skip > track.density) continue;
-
     const x0 = labelW + i * cellW - pxOffset;
     const widthFrac = 0.35 + hash(idx, track.seed) * 0.5;
     const spanW = widthFrac * cellW;
     const isError = track.errors && hash(idx, track.seed + 11) > 0.86;
-
     if (isError) {
       ctx.fillStyle = 'rgba(201, 117, 96, 0.22)';
       ctx.strokeStyle = '#c97560';
@@ -1494,7 +1566,6 @@ function drawSpans(track, ty, trackH, labelW, w) {
       ctx.strokeStyle = 'rgba(216, 211, 199, 0.55)';
     }
     ctx.lineWidth = 1;
-
     const sx = x0 + 2, sy = spanY + 0.5, sw = spanW - 2, sh = spanH - 1;
     ctx.fillRect(sx, sy, sw, sh);
     ctx.strokeRect(sx + 0.5, sy + 0.5, sw - 1, sh - 1);
@@ -1502,7 +1573,6 @@ function drawSpans(track, ty, trackH, labelW, w) {
 }
 
 function drawPlayhead(x, chromeH, h) {
-  // glow
   ctx.save();
   ctx.shadowColor = 'rgba(155, 207, 111, 0.55)';
   ctx.shadowBlur = 10;
@@ -1513,8 +1583,6 @@ function drawPlayhead(x, chromeH, h) {
   ctx.lineTo(x + 0.5, h);
   ctx.stroke();
   ctx.restore();
-
-  // head pip
   ctx.fillStyle = '#ece8de';
   ctx.beginPath();
   ctx.moveTo(x - 5, chromeH);
@@ -1533,8 +1601,6 @@ function drawDeployMarker(x, chromeH, h) {
   ctx.lineTo(x + 0.5, h);
   ctx.stroke();
   ctx.setLineDash([]);
-
-  // tag
   ctx.fillStyle = 'rgba(224, 160, 96, 0.9)';
   ctx.fillRect(x, chromeH + 4, 48, 12);
   ctx.fillStyle = '#0a0a0c';
@@ -1550,46 +1616,29 @@ function render() {
   const bodyH = h - chromeH;
   const labelW = Math.min(180, w * 0.22);
   const trackH = bodyH / tracks.length;
-
   offsetX += 0.45;
-
-  // paper
   ctx.fillStyle = '#0f0f12';
   ctx.fillRect(0, 0, w, h);
-
-  // grid
   drawGrid(w, h, chromeH, trackH, labelW);
-
-  // tracks (clip to timeline area)
   ctx.save();
   ctx.beginPath();
   ctx.rect(labelW, chromeH, w - labelW, bodyH);
   ctx.clip();
-
   for (let i = 0; i < tracks.length; i++) {
     const ty = chromeH + i * trackH;
     const track = tracks[i];
     if (track.type === 'wave') drawWave(track, ty, trackH, labelW, w, now);
     else if (track.type === 'spans') drawSpans(track, ty, trackH, labelW, w);
   }
-
-  // deploy marker drifting across
   const deployX = labelW + ((w - labelW) * 1.4 - (offsetX * 0.8) % ((w - labelW) * 1.6));
   if (deployX > labelW && deployX < w) {
     drawDeployMarker(deployX, chromeH, h);
   }
-
   ctx.restore();
-
-  // label column (opaque, on top of any overflow)
   drawChromePad(labelW, chromeH, bodyH);
   drawLabels(chromeH, trackH, labelW);
-
-  // playhead — fixed at ~72% across
   const playheadX = labelW + (w - labelW) * 0.72;
   drawPlayhead(playheadX, chromeH, h);
-
-  // timecode
   const tc = document.getElementById('tc');
   if (tc) {
     const totalMs = 97204 + Math.floor(now * 180);
@@ -1601,19 +1650,11 @@ function render() {
       ':' + String(ss).padStart(2, '0') +
       '.' + String(ms).padStart(3, '0');
   }
-
   requestAnimationFrame(render);
 }
 requestAnimationFrame(render);
 
 // ═══════════════════════════════════════ TOPOLOGY CARTOGRAPH
-//
-// A topographic map of a distributed system. The terrain is a real elevation
-// field — gaussian peaks at each region, plus 2D noise for irregularity.
-// Contour lines are extracted by marching squares, then drawn with a penciled
-// double-stroke so each isoline reads as hand-inked. Services are hand-placed
-// "cities" with labels and types. Traces animate in one at a time as smooth
-// unbroken routes, like revealing a journey on a paper map.
 
 const topoCanvas = document.getElementById('topo');
 const topoCtx = topoCanvas.getContext('2d');
@@ -1633,7 +1674,6 @@ function smoothstep(e0, e1, x) {
   return t * t * (3 - 2 * t);
 }
 
-// ——— 2D value noise for terrain ——————————————————————————————
 function noise2D(x, y, seed) {
   const xi = Math.floor(x), yi = Math.floor(y);
   const xf = x - xi, yf = y - yi;
@@ -1653,7 +1693,6 @@ function fbm2D(x, y, seed) {
        + noise2D(x * 8, y * 8, seed + 3) * 0.0625;
 }
 
-// ——— Regions (gaussian peaks in the elevation field) ——————————
 const regions = [
   { cx: -0.58, cy: -0.28, r: 0.32, label: 'us-east-1',  sub: 'edge ingress'  },
   { cx: -0.05, cy:  0.24, r: 0.42, label: 'us-west-2',  sub: 'commerce core' },
@@ -1662,10 +1701,6 @@ const regions = [
   { cx: -0.58, cy:  0.48, r: 0.20, label: 'internal',   sub: 'infra'         },
 ];
 
-// ——— Services (hand-placed "cities") ——————————————————————————
-// `anchor` sets label side. `type` is the service class (tiny subscript at
-// close zoom). `capital: true` marks a critical service — larger dot, ring,
-// bolder label, always visible.
 const serviceSpec = {
   'us-east-1': [
     { name: 'api-gateway',   rx: -0.10, ry: -0.06, type: 'api',   capital: true, anchor: 'r' },
@@ -1714,9 +1749,8 @@ regions.forEach(reg => {
 });
 const allNodes = Object.values(nodes);
 
-// ——— Elevation field + contour extraction ——————————————————————
 function elevation(x, y) {
-  let e = 0.15; // baseline
+  let e = 0.15;
   regions.forEach(reg => {
     const dx = x - reg.cx, dy = y - reg.cy;
     const sigma = reg.r * 0.85;
@@ -1743,8 +1777,6 @@ function cellWorld(i, j) {
     Y_MIN + (Y_MAX - Y_MIN) * j / (GRID_H - 1),
   ];
 }
-// Marching squares: for each grid cell, emit line segments where the
-// elevation contour at `level` crosses the cell.
 function marchingSquares(level) {
   const segs = [];
   for (let j = 0; j < GRID_H - 1; j++) {
@@ -1759,7 +1791,6 @@ function marchingSquares(level) {
       if (v11 > level) idx |= 4;
       if (v01 > level) idx |= 8;
       if (idx === 0 || idx === 15) continue;
-
       const [p00x, p00y] = cellWorld(i, j);
       const [p10x, p10y] = cellWorld(i + 1, j);
       const [p11x, p11y] = cellWorld(i + 1, j + 1);
@@ -1769,7 +1800,6 @@ function marchingSquares(level) {
       const rx = p10x, ry = itp(p10y, p11y, v10, v11);
       const tx = itp(p01x, p11x, v01, v11), ty = p01y;
       const lx = p00x, ly = itp(p00y, p01y, v00, v01);
-
       switch (idx) {
         case 1: case 14: segs.push([bx, by, lx, ly]); break;
         case 2: case 13: segs.push([bx, by, rx, ry]); break;
@@ -1787,7 +1817,6 @@ function marchingSquares(level) {
 const CONTOUR_LEVELS = [0.32, 0.48, 0.62, 0.76, 0.88, 0.96];
 const contours = CONTOUR_LEVELS.map(level => ({ level, segs: marchingSquares(level) }));
 
-// ——— Traces (one active at a time, cycling) ————————————————————
 const traces = [
   { id: 'login',
     path: ['api-gateway', 'auth-service', 'sessions', 'catalog'],
@@ -1803,12 +1832,11 @@ const TRACE_SLOT = 6;
 const TRACE_CYCLE = TRACE_SLOT * traces.length;
 
 const pins = [
-  { at: 'payments',    color: '#c97560', label: 'INCIDENT · 03:14' },
+  { at: 'payments',    color: '#c97560', label: 'INCIDENT \u00B7 03:14' },
   { at: 'api-gateway', color: '#e0a060', label: 'DEPLOY v2.14.1' },
   { at: 'checkout',    color: '#ece8de', label: 'BOOKMARK' },
 ];
 
-// ——— Curve helpers ——————————————————————————————————————————
 function catmullRom(points, tension = 0.5) {
   const segs = [];
   for (let i = 0; i < points.length - 1; i++) {
@@ -1825,7 +1853,6 @@ function catmullRom(points, tension = 0.5) {
   }
   return segs;
 }
-// de Casteljau: return the 0..t sub-curve of a cubic bezier.
 function splitBezier(p1, cp1, cp2, p2, t) {
   const L = (a, b) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
   const a = L(p1, cp1), b = L(cp1, cp2), c = L(cp2, p2);
@@ -1836,12 +1863,10 @@ function splitBezier(p1, cp1, cp2, p2, t) {
 function drawPin(sx, sy, color, label, labelAlpha) {
   const stemH = 13, headR = 3.8;
   topoCtx.save();
-  // shadow on the ground — implies the pin is physical
   topoCtx.fillStyle = 'rgba(0, 0, 0, 0.32)';
   topoCtx.beginPath();
   topoCtx.ellipse(sx + 1, sy + 1, 3.4, 1.4, 0, 0, Math.PI * 2);
   topoCtx.fill();
-  // stem
   topoCtx.strokeStyle = color;
   topoCtx.lineWidth = 1.2;
   topoCtx.lineCap = 'round';
@@ -1849,7 +1874,6 @@ function drawPin(sx, sy, color, label, labelAlpha) {
   topoCtx.moveTo(sx, sy);
   topoCtx.lineTo(sx, sy - stemH);
   topoCtx.stroke();
-  // head
   topoCtx.fillStyle = color;
   topoCtx.beginPath();
   topoCtx.arc(sx, sy - stemH - headR + 1, headR, 0, Math.PI * 2);
@@ -1858,7 +1882,6 @@ function drawPin(sx, sy, color, label, labelAlpha) {
   topoCtx.beginPath();
   topoCtx.arc(sx, sy - stemH - headR + 1, 1.2, 0, Math.PI * 2);
   topoCtx.fill();
-  // ground point
   topoCtx.fillStyle = color;
   topoCtx.beginPath();
   topoCtx.arc(sx, sy, 1.5, 0, Math.PI * 2);
@@ -1881,8 +1904,6 @@ function drawTrace(trace, phase, opacity, W2S) {
   const N = segs.length;
   const curIdx = Math.min(Math.floor(phase * N), N - 1);
   const curT = Math.max(0, Math.min(1, phase * N - curIdx));
-
-  // Glow — one continuous path up to the current reveal position.
   topoCtx.globalAlpha = opacity * 0.18;
   topoCtx.lineWidth = 4.4;
   topoCtx.strokeStyle = trace.color || trace.segColors[0];
@@ -1898,8 +1919,6 @@ function drawTrace(trace, phase, opacity, W2S) {
     topoCtx.bezierCurveTo(sp.cp1[0], sp.cp1[1], sp.cp2[0], sp.cp2[1], sp.p2[0], sp.p2[1]);
   }
   topoCtx.stroke();
-
-  // Per-segment colored stroke
   topoCtx.globalAlpha = opacity;
   topoCtx.lineWidth = 1.6;
   for (let i = 0; i < curIdx; i++) {
@@ -1919,8 +1938,6 @@ function drawTrace(trace, phase, opacity, W2S) {
     topoCtx.bezierCurveTo(sp.cp1[0], sp.cp1[1], sp.cp2[0], sp.cp2[1], sp.p2[0], sp.p2[1]);
     topoCtx.stroke();
   }
-
-  // Origin marker — filled circle with an outer ring, centered on source.
   const o = screenPts[0];
   const startCol = trace.segColors ? trace.segColors[0] : trace.color;
   topoCtx.fillStyle = '#0a0a0c';
@@ -1929,8 +1946,6 @@ function drawTrace(trace, phase, opacity, W2S) {
   topoCtx.beginPath(); topoCtx.arc(o[0], o[1], 3, 0, Math.PI * 2); topoCtx.fill();
   topoCtx.fillStyle = '#0a0a0c';
   topoCtx.beginPath(); topoCtx.arc(o[0], o[1], 1, 0, Math.PI * 2); topoCtx.fill();
-
-  // Destination arrow — points along the final tangent, only when revealed.
   if (phase > 0.98) {
     const last = segs[segs.length - 1];
     const d = screenPts[screenPts.length - 1];
@@ -1947,11 +1962,9 @@ function drawTrace(trace, phase, opacity, W2S) {
     topoCtx.closePath();
     topoCtx.fill();
   }
-
   topoCtx.globalAlpha = 1;
 }
 
-// ——— Main render ———————————————————————————————————————————
 function renderTopo() {
   if (!topoCanvas) return;
   const r = topoCanvas.getBoundingClientRect();
@@ -1960,28 +1973,20 @@ function renderTopo() {
   const chromeH = 40;
   const bodyH = h - chromeH;
   if (w <= 0 || bodyH <= 0) { requestAnimationFrame(renderTopo); return; }
-
-  // Slow oscillating zoom — 70s period.
   const zoomPhase = (Math.sin(now * (Math.PI * 2) / 70) + 1) / 2;
   const zoom = 1.0 + zoomPhase * 1.35;
-
-  // Active trace, with timing:  0-2s reveal · 2-5s hold · 5-6s fade.
   const t = now % TRACE_CYCLE;
   const slot = Math.floor(t / TRACE_SLOT);
   const local = t - slot * TRACE_SLOT;
   const trace = traces[slot];
   const phase = local < 2 ? local / 2 : 1;
   const opacity = local < 5 ? 1 : Math.max(0, 1 - (local - 5));
-
-  // Focus follows the mean position of the active trace's nodes.
   const tracePath = trace.path.map(n => nodes[n]).filter(Boolean);
   let fx = 0, fy = 0;
   tracePath.forEach(n => { fx += n.x; fy += n.y; });
   fx /= tracePath.length || 1; fy /= tracePath.length || 1;
-
   const panX = Math.cos(now * 0.03) * 0.015;
   const panY = Math.sin(now * 0.025) * 0.015;
-
   const screenCx = w / 2;
   const screenCy = chromeH + bodyH / 2;
   const baseScale = Math.min(w, bodyH) * 0.46;
@@ -1992,11 +1997,8 @@ function renderTopo() {
   function W2S(x, y) {
     return [screenCx + (x - offX) * scale, screenCy + (y - offY) * scale];
   }
-
   topoCtx.fillStyle = '#0f0f12';
   topoCtx.fillRect(0, 0, w, h);
-
-  // Graticule
   topoCtx.strokeStyle = 'rgba(61, 58, 51, 0.20)';
   topoCtx.lineWidth = 1;
   for (let g = -3; g <= 3; g += 0.25) {
@@ -2013,11 +2015,6 @@ function renderTopo() {
       topoCtx.stroke();
     }
   }
-
-  // ——— Contour lines ———
-  // Each contour level drawn as one batched path, then re-drawn with jitter
-  // for a penciled / hand-inked feel. Line weight + opacity scale with level
-  // so peaks (regions) read as higher elevation.
   contours.forEach(({ level, segs }) => {
     const baseAlpha = 0.10 + Math.pow(level, 1.4) * 0.42;
     const lw = level > 0.7 ? 1 : 0.65;
@@ -2040,13 +2037,9 @@ function renderTopo() {
       topoCtx.stroke();
     }
   });
-
-  // ——— Active trace (beneath dots) ———
   topoCtx.lineCap = 'round';
   topoCtx.lineJoin = 'round';
   if (trace && opacity > 0) drawTrace(trace, phase, opacity, W2S);
-
-  // ——— Service dots ———
   nodeScreenPositions.length = 0;
   allNodes.forEach(n => {
     const [sx, sy] = W2S(n.x, n.y);
@@ -2062,8 +2055,6 @@ function renderTopo() {
       topoCtx.beginPath(); topoCtx.arc(sx, sy, rad + 2.8, 0, Math.PI * 2); topoCtx.stroke();
     }
   });
-
-  // ——— Service labels (anchor-aware, with type subtitles) ———
   const smallAlpha = smoothstep(1.25, 1.75, zoom);
   const typeAlpha  = smoothstep(1.75, 2.15, zoom);
   allNodes.forEach(n => {
@@ -2071,14 +2062,12 @@ function renderTopo() {
     if (sx < -160 || sx > w + 160 || sy < chromeH - 20 || sy > h + 20) return;
     const alpha = n.capital ? 1 : smallAlpha;
     if (alpha < 0.02) return;
-
     topoCtx.font = n.capital
       ? '500 10px "IBM Plex Mono", monospace'
       : '400 9px "IBM Plex Mono", monospace';
     topoCtx.fillStyle = n.capital
       ? `rgba(236, 232, 222, ${alpha})`
       : `rgba(236, 232, 222, ${alpha * 0.84})`;
-
     let lx = sx, ly = sy, align = 'start', typeDy = 10;
     switch (n.anchor) {
       case 'r': lx = sx + 9;  ly = sy + 3;   align = 'start';  break;
@@ -2088,7 +2077,6 @@ function renderTopo() {
     }
     topoCtx.textAlign = align;
     topoCtx.fillText(n.name, lx, ly);
-
     if (typeAlpha > 0.02 && n.type) {
       topoCtx.font = '500 7px "IBM Plex Mono", monospace';
       topoCtx.fillStyle = `rgba(122, 118, 109, ${typeAlpha * 0.95})`;
@@ -2096,8 +2084,6 @@ function renderTopo() {
     }
   });
   topoCtx.textAlign = 'start';
-
-  // ——— Region labels (tracked caps + serif subtitle) ———
   const regLabelAlpha = smoothstep(1.7, 1.0, zoom);
   if (regLabelAlpha > 0.02) {
     regions.forEach(reg => {
@@ -2120,16 +2106,12 @@ function renderTopo() {
     });
     topoCtx.textAlign = 'start';
   }
-
-  // ——— Pins ———
   pins.forEach(p => {
     const n = nodes[p.at];
     if (!n) return;
     const [sx, sy] = W2S(n.x, n.y);
     drawPin(sx, sy, p.color, p.label, Math.max(smallAlpha, 0.4));
   });
-
-  // ——— Pulse on the incident pin ———
   const incident = pins.find(p => p.color === '#c97560');
   const pulseNode = incident ? nodes[incident.at] : allNodes[0];
   const pulseT = (now % 3.2) / 3.2;
@@ -2143,8 +2125,6 @@ function renderTopo() {
     topoCtx.arc(sx, sy, pr, 0, Math.PI * 2);
     topoCtx.stroke();
   }
-
-  // ——— Scale bar ———
   const barLen = 60, barY = h - 18, barX = w - barLen - 20;
   topoCtx.strokeStyle = 'rgba(122, 118, 109, 0.55)';
   topoCtx.lineWidth = 1;
@@ -2158,8 +2138,6 @@ function renderTopo() {
   topoCtx.textAlign = 'right';
   topoCtx.fillText(`${Math.round(500 / zoom)} hosts`, barX + barLen, barY - 6);
   topoCtx.textAlign = 'start';
-
-  // ——— Chrome readouts ———
   const zoomEl = document.getElementById('zoom');
   if (zoomEl) zoomEl.textContent = zoom.toFixed(2);
   const coordEl = document.getElementById('coord');
@@ -2167,10 +2145,9 @@ function renderTopo() {
     const lat = -(fy + panY) * 85;
     const lon = (fx + panX) * 170;
     coordEl.textContent =
-      `${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? 'N' : 'S'} · ` +
-      `${Math.abs(lon).toFixed(2)}° ${lon >= 0 ? 'E' : 'W'}`;
+      `${Math.abs(lat).toFixed(2)}\u00B0 ${lat >= 0 ? 'N' : 'S'} \u00B7 ` +
+      `${Math.abs(lon).toFixed(2)}\u00B0 ${lon >= 0 ? 'E' : 'W'}`;
   }
-
   requestAnimationFrame(renderTopo);
 }
 requestAnimationFrame(renderTopo);
@@ -2182,7 +2159,6 @@ let resizeLogDensity = () => {};
 if (logCv) {
   const lctx = logCv.getContext('2d');
   let lw = 0, lh = 0, ldpr = 1;
-
   function resizeLog() {
     const r = logCv.getBoundingClientRect();
     ldpr = window.devicePixelRatio || 1;
@@ -2195,16 +2171,14 @@ if (logCv) {
   resizeLog();
   window.addEventListener('resize', resizeLog);
   resizeLogDensity = resizeLog;
-
-  const BUCKETS = 80;                // 80 × 0.5s = 40s window
-  const INCIDENT_BUCKET = 55;        // where the playhead rests
+  const BUCKETS = 80;
+  const INCIDENT_BUCKET = 55;
   const buckets = [];
   for (let i = 0; i < BUCKETS; i++) {
     let info = 3.6 + Math.sin(i * 0.37) * 1.15 + Math.sin(i * 0.11 + 1.3) * 1.5;
     info = Math.max(1.4, info);
     let warn = Math.max(0, 0.18 + Math.sin(i * 0.19 + 2.1) * 0.35);
     let err  = 0;
-
     if (i >= 50 && i <= 54) {
       const t = (i - 50) / 4;
       warn = 1.2 + t * 3.8 + Math.sin(i * 1.7) * 0.35;
@@ -2220,15 +2194,11 @@ if (logCv) {
       warn = Math.max(warn, 2.7 * decay + Math.sin(i * 1.2) * 0.2);
       err  = Math.max(0, 2.1 * decay);
     }
-
     buckets.push({ info, warn: Math.max(0, warn), err: Math.max(0, err) });
   }
-
-  const SCALE = 2.9;  // px per unit
-
+  const SCALE = 2.9;
   function renderLog(t) {
     lctx.clearRect(0, 0, lw, lh);
-
     const padL = 14, padR = 14, padT = 16, padB = 18;
     const plotW   = Math.max(1, lw - padL - padR);
     const plotH   = Math.max(1, lh - padT - padB);
@@ -2236,21 +2206,16 @@ if (logCv) {
     const barGap  = Math.max(0.8, barW * 0.18);
     const barWidth = Math.max(0.5, barW - barGap);
     const baseline = lh - padB;
-
-    // Faint baseline
     lctx.strokeStyle = 'rgba(28, 27, 24, 0.9)';
     lctx.lineWidth = 1;
     lctx.beginPath();
     lctx.moveTo(padL, baseline + 0.5);
     lctx.lineTo(lw - padR, baseline + 0.5);
     lctx.stroke();
-
-    // Stacked severity bars
     for (let i = 0; i < BUCKETS; i++) {
       const b = buckets[i];
       const x = padL + i * barW + barGap / 2;
       let y = baseline;
-
       if (b.info > 0.1) {
         const h = b.info * SCALE;
         lctx.fillStyle = 'rgba(122, 118, 109, 0.22)';
@@ -2270,8 +2235,6 @@ if (logCv) {
         y -= h;
       }
     }
-
-    // Live-arrival shimmer on rightmost buckets — signals "streaming in"
     const liveStart = BUCKETS - 10;
     for (let i = liveStart; i < BUCKETS; i++) {
       const x = padL + i * barW + barGap / 2;
@@ -2281,20 +2244,14 @@ if (logCv) {
       lctx.fillStyle = 'rgba(155, 207, 111, ' + a.toFixed(3) + ')';
       lctx.fillRect(x, padT, barWidth, plotH);
     }
-
-    // Playhead at the incident
     const phX = padL + INCIDENT_BUCKET * barW + barW / 2;
     const phPulse = 0.55 + 0.45 * Math.sin(t * 0.003);
-
-    // vertical line
     lctx.strokeStyle = 'rgba(236, 232, 222, ' + (0.32 + phPulse * 0.18).toFixed(3) + ')';
     lctx.lineWidth = 1;
     lctx.beginPath();
     lctx.moveTo(phX, padT - 3);
     lctx.lineTo(phX, baseline);
     lctx.stroke();
-
-    // phosphor glow halo
     const grad = lctx.createRadialGradient(phX, padT + 1, 0, phX, padT + 1, 10);
     grad.addColorStop(0, 'rgba(155, 207, 111, ' + (0.35 * phPulse).toFixed(3) + ')');
     grad.addColorStop(1, 'rgba(155, 207, 111, 0)');
@@ -2302,32 +2259,23 @@ if (logCv) {
     lctx.beginPath();
     lctx.arc(phX, padT + 1, 10, 0, Math.PI * 2);
     lctx.fill();
-
-    // phosphor dot cap
     lctx.fillStyle = 'rgba(155, 207, 111, ' + (0.55 + phPulse * 0.35).toFixed(3) + ')';
     lctx.beginPath();
     lctx.arc(phX, padT + 1, 2.4, 0, Math.PI * 2);
     lctx.fill();
-
-    // Axis labels
     lctx.font = '9px IBM Plex Mono, ui-monospace, monospace';
     lctx.textAlign = 'left';
     lctx.fillStyle = 'rgba(61, 58, 51, 0.95)';
     lctx.fillText('14:23:00', padL, lh - 4);
     lctx.textAlign = 'right';
     lctx.fillText('14:23:40', lw - padR, lh - 4);
-
-    // Playhead time
     lctx.textAlign = 'center';
     lctx.fillStyle = 'rgba(155, 207, 111, ' + (0.55 + phPulse * 0.3).toFixed(3) + ')';
     lctx.fillText('14:23:07.411', phX, lh - 4);
-
-    // Top-left density hint
     lctx.textAlign = 'left';
     lctx.fillStyle = 'rgba(61, 58, 51, 0.9)';
     lctx.fillText('EVENTS / 0.5s BUCKET', padL, padT - 4);
   }
-
   function tickLog(t) {
     renderLog(t);
     requestAnimationFrame(tickLog);
@@ -2343,27 +2291,22 @@ function submitEmail(e) {
   const btn = document.getElementById('submit');
   const note = document.getElementById('note');
   const email = input.value.trim();
-
   if (!email.includes('@')) {
     note.textContent = "Email address required.";
     note.className = 'note error';
     return false;
   }
-
   const token = (window.turnstile && window.turnstile.getResponse()) || '';
   if (!token) {
     note.textContent = "Complete the challenge to continue.";
     note.className = 'note error';
     return false;
   }
-
   btn.disabled = true;
-  btn.textContent = 'Sending…';
+  btn.textContent = 'Sending\u2026';
   note.textContent = '';
   note.className = 'note';
-
   posthog.capture('waitlist_submitted');
-
   fetch('/api/waitlist', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -2393,7 +2336,6 @@ function submitEmail(e) {
       note.textContent = 'Network error. Try again.';
       note.className = 'note error';
     });
-
   return false;
 }
 
@@ -2409,10 +2351,10 @@ const logSearchHint = logDialog && logDialog.querySelector('.log-toolbar .search
 const logEmpty      = document.getElementById('logEmpty');
 
 const logState = {
-  anomaly:   true,   // chip "Anomaly > 2σ"
-  heartbeat: true,   // chip "Heartbeat muted"
-  baseline:  false,  // chip "Baseline /1h"
-  trace:     false,  // chip "Trace follow"
+  anomaly:   true,
+  heartbeat: true,
+  baseline:  false,
+  trace:     false,
   search:    '',
 };
 
@@ -2441,18 +2383,15 @@ function rebuildMsg(row, searchTerms) {
   const msgEl = row.querySelector('.msg');
   if (!msgEl) return;
   const raw = row.getAttribute('data-raw-msg') || msgEl.textContent;
-  // Split into template (before first space + '{') and fields (the {...})
   let template = raw, fields = '';
   const braceIdx = raw.indexOf('{');
   if (braceIdx > -1) {
     template = raw.slice(0, braceIdx).trim();
     fields = raw.slice(braceIdx).trim();
   }
-
   const highlight = (text) => {
     if (!searchTerms || !searchTerms.length) return escapeHtml(text);
     const escaped = escapeHtml(text);
-    // Build a single alternation regex, case-insensitive.
     const pattern = searchTerms
       .map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
       .filter(Boolean)
@@ -2460,7 +2399,6 @@ function rebuildMsg(row, searchTerms) {
     if (!pattern) return escaped;
     return escaped.replace(new RegExp(pattern, 'gi'), m => `<mark>${m}</mark>`);
   };
-
   msgEl.innerHTML =
     highlight(template) +
     (fields ? ` <span class="fields">${highlight(fields)}</span>` : '');
@@ -2489,24 +2427,18 @@ function applyFilters() {
   const { anomaly, heartbeat, baseline, trace, search } = logState;
   document.body.classList.toggle('anomaly-on', anomaly);
   document.body.classList.toggle('baseline-on', baseline);
-
   const rows = Array.from(logList.querySelectorAll('.log-row'));
   const contextMap = new Map();
   rows.forEach(r => { const c = contextFor(r); if (c) contextMap.set(r, c); });
-
   const terms = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
   let visible = 0, matched = 0;
-
   rows.forEach(row => {
     const template = (row.getAttribute('data-template') || '').toLowerCase();
     const tokens   = (row.getAttribute('data-tokens')   || '').toLowerCase();
     const rawMsg   = (row.getAttribute('data-raw-msg')  || '').toLowerCase();
     const haystack = `${template} ${tokens} ${rawMsg}`;
-
     let show = true;
-
     if (trace && row.getAttribute('data-trace') !== '1') show = false;
-
     if (terms.length) {
       const ok = terms.every(t => haystack.includes(t));
       if (!ok) show = false;
@@ -2514,17 +2446,12 @@ function applyFilters() {
     } else if (heartbeat && row.classList.contains('muted-persist')) {
       show = false;
     }
-
     row.classList.toggle('hidden', !show);
     const ctx = contextMap.get(row);
     if (ctx) ctx.classList.toggle('hidden', !show);
-
     rebuildMsg(row, terms);
-
     if (show) visible++;
   });
-
-  // Reorder: anomaly-first (desc anomaly score) or chronological (desc ts).
   const sorted = rows.slice().sort((a, b) => {
     if (anomaly) {
       return (+b.getAttribute('data-anomaly')) - (+a.getAttribute('data-anomaly'));
@@ -2540,11 +2467,10 @@ function applyFilters() {
     logList.appendChild(logEmpty);
     logEmpty.hidden = visible > 0;
   }
-
   if (logSearchHint) {
     logSearchHint.textContent = terms.length
-      ? `embeddings · ${matched} match${matched === 1 ? '' : 'es'}`
-      : 'embeddings · ready';
+      ? `embeddings \u00B7 ${matched} match${matched === 1 ? '' : 'es'}`
+      : 'embeddings \u00B7 ready';
   }
 }
 
@@ -2557,7 +2483,7 @@ function openLogDialog(node) {
     logEventsEl.textContent = fmtEvents(events);
   }
   if (logClusteredEl && node) {
-    const h = hashStr(node.name + '·c');
+    const h = hashStr(node.name + '\u00B7c');
     logClusteredEl.textContent = String(16 + (h % 18));
   }
   logDialog.classList.add('open');
@@ -2582,8 +2508,6 @@ if (logDialog) {
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && logDialog.classList.contains('open')) closeLogDialog();
   });
-
-  // Chip toggles
   logDialog.querySelectorAll('.log-toolbar .chip').forEach(chip => {
     chip.addEventListener('click', () => {
       const key = chip.getAttribute('data-key');
@@ -2594,8 +2518,6 @@ if (logDialog) {
       posthog.capture('log_filter_toggled', { filter: key, enabled: logState[key] });
     });
   });
-
-  // Per-row action buttons.
   logDialog.querySelectorAll('.log-row .act').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
@@ -2604,7 +2526,6 @@ if (logDialog) {
       const on = btn.getAttribute('data-on') === 'true';
       const next = !on;
       btn.setAttribute('data-on', String(next));
-
       if (btn.classList.contains('mute')) {
         row.classList.toggle('muted-persist', next);
         row.classList.toggle('faded', next);
@@ -2617,8 +2538,6 @@ if (logDialog) {
       }
     });
   });
-
-  // Search input.
   let _phSearchDebounce;
   if (logSearch) {
     logSearch.addEventListener('input', () => {
@@ -2632,21 +2551,17 @@ if (logDialog) {
       }
     });
   }
-
-  // Initial state.
   logState.search = logSearch ? logSearch.value : '';
   applyFilters();
   recomputeRelated();
 }
-
-// ——— Hit-testing on the topology canvas ————————————————————
 
 function hitTestNode(ev) {
   if (!topoCanvas || !nodeScreenPositions.length) return null;
   const rect = topoCanvas.getBoundingClientRect();
   const x = ev.clientX - rect.left;
   const y = ev.clientY - rect.top;
-  let best = null, bestD = 14 * 14;  // generous 14px hit radius
+  let best = null, bestD = 14 * 14;
   for (let i = 0; i < nodeScreenPositions.length; i++) {
     const p = nodeScreenPositions[i];
     const dx = p.sx - x, dy = p.sy - y;
@@ -2673,8 +2588,6 @@ if (topoCanvas) {
   });
 }
 
-// ═══════════════════════════════════════ WAITLIST FUNNEL ENTRY
-
 (function () {
   const waitlistSection = document.getElementById('waitlist');
   if (!waitlistSection || !window.IntersectionObserver) return;
@@ -2691,8 +2604,6 @@ if (topoCanvas) {
   obs.observe(waitlistSection);
 }());
 
-// ═══════════════════════════════════════ EMAIL INPUT FOCUS
-
 (function () {
   const emailInput = document.getElementById('email');
   if (!emailInput) return;
@@ -2703,8 +2614,6 @@ if (topoCanvas) {
     posthog.capture('email_input_focused');
   });
 }());
-
-// ═══════════════════════════════════════ GLOBAL ERROR TRACKING
 
 window.addEventListener('unhandledrejection', function (event) {
   posthog.captureException(event.reason);
