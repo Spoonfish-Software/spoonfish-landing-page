@@ -17,6 +17,10 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    if (url.hostname === "www.spoonfish.dev") {
+      return Response.redirect(`https://spoonfish.dev${url.pathname}${url.search}`, 301);
+    }
+
     if (url.pathname === "/api/waitlist") {
       if (request.method === "POST") return onRequestPost({ request, env });
       if (request.method === "OPTIONS") return onRequestOptions();

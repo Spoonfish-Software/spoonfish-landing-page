@@ -15,6 +15,11 @@
       "pattern": "spoonfish.dev",
       "zone_name": "spoonfish.dev",
       "custom_domain": true
+    },
+    {
+      "pattern": "www.spoonfish.dev",
+      "zone_name": "spoonfish.dev",
+      "custom_domain": true
     }
   ],
   "vars": {
