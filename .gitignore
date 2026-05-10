@@ -4,3 +4,5 @@ node_modules/
 .env
 .dev.vars
 .claude/
+.direnv/
+result
