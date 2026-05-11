@@ -1,0 +1,8 @@
+{
+  "_comment": "BWS-managed Cloudflare Worker secrets, synced on every deploy. Consumed by spoonfish-worker-deploy (from spoonfish-infra-templates). LOOPS_API_KEY stays Cloudflare-only — not in Bitwarden by James's call. CLOUDFLARE_API_TOKEN is also in BWS but is wrangler's deploy-time credential, not a Worker runtime secret.",
+  "bwsSecrets": [
+    "OPS_CELL_NUMBER",
+    "SIGNALWIRE_API_TOKEN",
+    "TURNSTILE_SECRET"
+  ]
+}

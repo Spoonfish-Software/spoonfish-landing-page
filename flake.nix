@@ -1,30 +1,27 @@
 {
-  description = "Spoonfish landing page — Cloudflare Workers project";
+  description = "Spoonfish landing page — Cloudflare Worker, deployed via spoonfish-infra-templates";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    # git+ssh (not github:) so Nix uses SSH key auth — required for the private
+    # spoonfish-infra-templates repo. The `github:` fetcher uses HTTPS API which
+    # 404s anonymously on private repos.
+    spoonfish-infra = {
+      url = "git+ssh://git@github.com/Spoonfish-Software/spoonfish-infra-templates";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { self, nixpkgs, flake-utils, spoonfish-infra, ... }:
     flake-utils.lib.eachDefaultSystem (system:
-      let pkgs = nixpkgs.legacyPackages.${system}; in {
-        devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            nodejs_22
-            wrangler
-            bws
-            jq
-            just
-            gh
-          ];
-
-          shellHook = ''
-            export PROJECT_ROOT="$PWD"
-            if [ -z "''${BWS_ACCESS_TOKEN:-}" ] && [ -t 1 ]; then
-              echo "⚠  BWS_ACCESS_TOKEN not set — run: source bin/load-bws-token" >&2
-            fi
-          '';
+      let
+        pkgs = import nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
         };
+      in {
+        devShells.default = spoonfish-infra.lib.mkCloudflareWorkerShell pkgs;
       });
 }
