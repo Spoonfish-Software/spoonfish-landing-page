@@ -1,4 +1,6 @@
 import { onRequestPost, onRequestOptions } from "../functions/api/waitlist.js";
+import { onRequestPost as smsInboundPost } from "../functions/api/sms-inbound.js";
+import { onRequestPost as voicemailPost } from "../functions/api/voicemail.js";
 
 async function proxyPostHog(request, url) {
   const isAsset = url.pathname.startsWith("/ingest/static/");
@@ -24,6 +26,16 @@ export default {
     if (url.pathname === "/api/waitlist") {
       if (request.method === "POST") return onRequestPost({ request, env });
       if (request.method === "OPTIONS") return onRequestOptions();
+      return new Response("Method not allowed", { status: 405 });
+    }
+
+    if (url.pathname === "/api/sms-inbound") {
+      if (request.method === "POST") return smsInboundPost({ request, env });
+      return new Response("Method not allowed", { status: 405 });
+    }
+
+    if (url.pathname === "/api/voicemail") {
+      if (request.method === "POST") return voicemailPost({ request, env });
       return new Response("Method not allowed", { status: 405 });
     }
 

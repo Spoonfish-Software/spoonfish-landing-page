@@ -24,7 +24,11 @@
   ],
   "vars": {
     "PUBLIC_POSTHOG_HOST": "/ingest",
-    "PUBLIC_POSTHOG_KEY": "phc_qeiD9GF2QAnn7JBfzX7ShKidyzNaodQzgyEVtwfZLojw"
+    "PUBLIC_POSTHOG_KEY": "phc_qeiD9GF2QAnn7JBfzX7ShKidyzNaodQzgyEVtwfZLojw",
+    "SIGNALWIRE_SPACE": "spoonfish-software.signalwire.com",
+    "SIGNALWIRE_PROJECT_ID": "65d66554-e82b-4f24-a031-c8d57fea533d",
+    "SIGNALWIRE_FROM_NUMBER": "+12532765486",
+    "MISSIVE_SMS_WEBHOOK": "https://callback.missiveapp.com/signalwire"
   },
   "kv_namespaces": [
     {
